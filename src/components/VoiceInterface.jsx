@@ -91,6 +91,7 @@ export default function VoiceInterface({ onSwitch }) {
     setView(section);
     viewRef.current = section;
     setTranscript('');
+    try { if (recRef.current) recRef.current.stop(); } catch(e) {}
     doSpeak(SECTIONS[section].greet);
   };
 
@@ -98,6 +99,7 @@ export default function VoiceInterface({ onSwitch }) {
     setView('hub');
     viewRef.current = 'hub';
     setTranscript('');
+    try { if (recRef.current) recRef.current.stop(); } catch(e) {}
     doSpeak("Darslar oynasiga qaytdik. Birinchi, ikkinchi yoki uchinchi bob deng.");
   };
 
@@ -110,7 +112,7 @@ export default function VoiceInterface({ onSwitch }) {
     console.log('[Voice] cmd:', cmd, '| view:', viewRef.current);
 
     // Orqaga
-    if (cmd.includes('orqaga') || cmd.includes('chiqish') || cmd.includes('qayt')) {
+    if (/orqaga|chiqish|qayt/.test(cmd)) {
       cooldownRef.current = now;
       if (viewRef.current !== 'hub') goHub();
       else onSwitch('onboarding');
@@ -118,13 +120,13 @@ export default function VoiceInterface({ onSwitch }) {
     }
     // Navigate only from hub
     if (viewRef.current === 'hub') {
-      if (cmd.includes('birinchi') || cmd.includes('bir ') || cmd.includes("1-bob") || cmd.includes('mikro')) {
+      if (/birinchi|1-bo|1 bo|bir |1-chi|1 chi|1chi|mikro/i.test(cmd)) {
         cooldownRef.current = now;
         goTo('mikro');
-      } else if (cmd.includes('ikkinchi') || cmd.includes('ikki ') || cmd.includes("2-bob") || cmd.includes('lab')) {
+      } else if (/ikkinchi|2-bo|2 bo|ikki|2-chi|2 chi|2chi|lab/i.test(cmd)) {
         cooldownRef.current = now;
         goTo('lab');
-      } else if (cmd.includes('uchinchi') || cmd.includes('uch ') || cmd.includes("3-bob") || cmd.includes('topshiriq')) {
+      } else if (/uchinchi|3-bo|3 bo|uch|3-chi|3 chi|3chi|topshiriq/i.test(cmd)) {
         cooldownRef.current = now;
         goTo('task');
       }
@@ -145,23 +147,28 @@ export default function VoiceInterface({ onSwitch }) {
     rec.continuous     = true;
     rec.interimResults = true;
 
+    let isActive = true;
     rec.onstart  = () => setListening(true);
     rec.onerror  = (e) => {
       console.error('[Voice] error:', e.error);
-      if (e.error === 'not-allowed')
+      if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+        isActive = false;
+        setListening(false);
         setErrMsg("Mikrofonga ruxsat yo'q. Brauzer manzil satrida mikrofon belgisini bosib ruxsat bering.");
-      setListening(false);
+      }
     };
     rec.onend    = () => {
-      setListening(false);
-      // Always restart – keep the mic hot
-      setTimeout(() => {
-        try { rec.start(); } catch (_) {}
-      }, 200);
+      // Always restart – keep the mic hot without flickering UI
+      if (isActive) {
+        setTimeout(() => {
+          try { rec.start(); } catch (_) {}
+        }, 200);
+      } else {
+        setListening(false);
+      }
     };
     rec.onresult = (e) => {
-      let txt = '';
-      for (let i = e.resultIndex; i < e.results.length; i++) txt += e.results[i][0].transcript;
+      let txt = Array.from(e.results).map(r => r[0].transcript).join(' ');
       setTranscript(txt);
       processCmd(txt);   // <-- always current because processCmd reads viewRef
     };
