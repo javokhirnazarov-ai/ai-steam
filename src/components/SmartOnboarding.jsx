@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 
 const STEPS = {
   INTRO: 'intro',
+  OPTIONS: 'options',
   PERMISSION: 'permission',
   TESTING: 'testing',
   RESULT: 'result'
@@ -26,7 +27,7 @@ const SmartOnboarding = ({ onComplete }) => {
     };
   }, []);
 
-  const startOnboarding = () => setStep(STEPS.PERMISSION);
+  const startOnboarding = () => setStep(STEPS.OPTIONS);
 
   const requestPermissions = async () => {
     try {
@@ -47,27 +48,50 @@ const SmartOnboarding = ({ onComplete }) => {
         if (SpeechRecognition) {
             const recognition = new SpeechRecognition();
             recognition.lang = 'uz-UZ';
-            recognition.continuous = true; // Uzluksiz eshitish
+            recognition.continuous = true;
+            recognition.interimResults = true; // Judiyam muhim: Kutmasdan darhol javob qaytarish uchun
+            
+            let isActive = true;
+
             recognition.onresult = (event) => {
-                const cmd = event.results[event.results.length - 1][0].transcript.toLowerCase();
+                let txt = '';
+                for (let i = 0; i < event.results.length; i++) {
+                    txt += event.results[i][0].transcript;
+                }
+                const cmd = txt.toLowerCase().trim();
                 setVoiceTranscript(cmd);
-                console.log("Onboarding Voice CMD:", cmd);
                 
-                if (cmd.includes('boshla')) {
-                    if (step === STEPS.INTRO) startOnboarding();
-                    if (cmd.includes('ovoz') || cmd.includes('dars')) {
-                       onComplete('voice'); // To'g'ridan-to'g'ri ovozli portal/darsga o'tish
-                    }
+                if (/boshla|davom|kir|yur|ketdik/.test(cmd)) {
+                    if (step === STEPS.INTRO) setStep(STEPS.OPTIONS);
+                }
+                if (/ovoz|dars/.test(cmd)) {
+                    onComplete('voice');
                 }
             };
+            
             recognition.onstart = () => setIsListeningForCommand(true);
-            recognition.onerror = () => { setIsListeningForCommand(false); if (step === STEPS.INTRO) setTimeout(() => { try { recognition.start(); } catch(e) {} }, 1000); };
-            recognition.onend = () => { setIsListeningForCommand(false); if (step === STEPS.INTRO) setTimeout(() => { try { recognition.start(); } catch(e) {} }, 500); };
+            recognition.onerror = (e) => { 
+                if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+                    isActive = false;
+                    setIsListeningForCommand(false);
+                    setVoiceTranscript("Mikrofonga ruxsat yo'q. Brauzerdan ruxsat bering.");
+                }
+            };
+            recognition.onend = () => { 
+                if (step === STEPS.INTRO && isActive) {
+                    setTimeout(() => { try { recognition.start(); } catch(err) {} }, 300); 
+                }
+            };
+            
             try { recognition.start(); } catch(e) {}
-            return () => { recognition.onend = null; recognition.onerror = null; recognition.stop(); };
+            
+            return () => { 
+                isActive = false; 
+                try { recognition.stop(); } catch(e) {} 
+            };
         }
     }
-  }, [step]);
+  }, [step, onComplete]);
 
   const runTests = () => {
     const stages = ["Ovozli tahlil...", "Imo-ishora tahlili...", "Natijani kutish..."];
@@ -83,56 +107,66 @@ const SmartOnboarding = ({ onComplete }) => {
   };
 
   return (
-    <div className="onboarding-container" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0a0a0c', color: '#fff' }}>
-      <div style={{ maxWidth: '800px', width: '90%', background: 'rgba(255,255,255,0.02)', padding: '60px 40px', borderRadius: '40px', border: '1px solid rgba(255,255,255,0.05)', textAlign: 'center' }}>
+    <div className="onboarding-container" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #00c6ff 0%, #0072ff 100%)', color: '#fff' }}>
+      <div style={{ maxWidth: '800px', width: '90%', background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', padding: '60px 40px', borderRadius: '40px', border: '1px solid rgba(255,255,255,0.3)', boxShadow: '0 15px 35px rgba(0,0,0,0.2)', textAlign: 'center' }}>
         
         {step === STEPS.INTRO && (
           <div className="animate-fade-in">
-            <h1 style={{ fontSize: '3.5rem', fontWeight: '800', marginBottom: '15px' }}>
-              <span style={{ color: '#7B61FF' }}>Inclusive</span> STEAM AI
+            <h1 style={{ fontSize: '4rem', fontWeight: '800', marginBottom: '15px', textShadow: '0 2px 10px rgba(0,0,0,0.1)' }}>
+              Inclusive STEAM AI
             </h1>
-            <p style={{ fontSize: '1.2rem', color: 'rgba(255,255,255,0.6)', marginBottom: '40px' }}>
+            <p style={{ fontSize: '1.3rem', color: 'rgba(255,255,255,0.9)', marginBottom: '50px' }}>
                Barchaga moslashtirilgan ta'lim platformasiga xush kelibsiz.
             </p>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '50px' }}>
-              <div style={{ background: 'rgba(255,255,255,0.03)', padding: '30px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                 <div style={{ background: '#FF7E7E', width: '50px', height: '50px', borderRadius: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 15px', fontSize: '1.5rem' }}>🧠</div>
-                 <h4 style={{ fontSize: '1.1rem' }}>Aqlli tahlil paneli</h4>
-                 <p style={{ fontSize: '0.85rem', opacity: 0.5 }}>Holatni aniqlash</p>
-              </div>
-              <div style={{ background: 'rgba(255,255,255,0.03)', padding: '30px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                 <div style={{ background: '#A0A0A0', width: '50px', height: '50px', borderRadius: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 15px', fontSize: '1.5rem' }}>🗣️</div>
-                 <h4 style={{ fontSize: '1.1rem' }}>Ovozli interfeys</h4>
-                 <p style={{ fontSize: '0.85rem', opacity: 0.5 }}>Gapirib boshqarish</p>
-              </div>
-              <div style={{ background: 'rgba(255,255,255,0.03)', padding: '30px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                 <div style={{ background: '#FFD700', width: '50px', height: '50px', borderRadius: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 15px', fontSize: '1.5rem' }}>✋</div>
-                 <h4 style={{ fontSize: '1.1rem' }}>Imo-ishora</h4>
-                 <p style={{ fontSize: '0.85rem', opacity: 0.5 }}>Harakatlar orqali</p>
-              </div>
-              <div style={{ background: 'rgba(255,255,255,0.03)', padding: '30px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                 <div style={{ background: '#5DE2A2', width: '50px', height: '50px', borderRadius: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 15px', fontSize: '1.5rem' }}>🎧</div>
-                 <h4 style={{ fontSize: '1.1rem' }}>Audio / Eshitish</h4>
-                 <p style={{ fontSize: '0.85rem', opacity: 0.5 }}>Ko'zi ojizlar uchun</p>
-              </div>
-            </div>
-
-            {isListeningForCommand && (
-              <div className="voice-indicator animate-fade-in" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '20px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#7B61FF', fontWeight: 'bold' }}>
-                  <div className="pulse-dot" style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#7B61FF', animation: 'pulse 1.5s infinite' }}></div>
-                  <span>Sizni eshityapman...</span>
+            <div style={{ height: '80px', marginBottom: '30px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+              {isListeningForCommand && (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 'bold' }}>
+                    <div className="pulse-dot" style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#fff', animation: 'pulse 1.5s infinite' }}></div>
+                    <span style={{color: '#fff'}}>Sizni eshityapman...</span>
+                  </div>
+                  {voiceTranscript && (
+                    <p style={{ fontStyle: 'italic', fontWeight: '500', color: '#fff', margin: 0, textShadow: '1px 1px 2px rgba(0,0,0,0.5)' }}>"{voiceTranscript}"</p>
+                  )}
                 </div>
-                {voiceTranscript && (
-                  <p style={{ fontStyle: 'italic', opacity: 0.8, color: 'var(--accent-secondary)' }}>"{voiceTranscript}"</p>
-                )}
-              </div>
-            )}
-            <button onClick={startOnboarding} style={{ background: 'linear-gradient(90deg, #7B61FF 0%, #00D2FF 100%)', color: '#fff', border: 'none', padding: '18px 60px', borderRadius: '20px', fontSize: '1.2rem', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px', margin: '0 auto', boxShadow: '0 10px 30px rgba(123, 97, 255, 0.3)' }}>
+              )}
+            </div>
+            <button onClick={startOnboarding} style={{ background: '#fff', color: '#0072ff', border: 'none', padding: '18px 60px', borderRadius: '20px', fontSize: '1.2rem', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px', margin: '0 auto', boxShadow: '0 10px 30px rgba(0, 114, 255, 0.3)', transition: 'transform 0.3s' }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
                Boshlash 
                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14m-7-7 7 7-7 7"/></svg>
             </button>
+          </div>
+        )}
+
+        {step === STEPS.OPTIONS && (
+          <div className="animate-fade-in">
+            <h2 style={{ fontSize: '2.5rem', marginBottom: '15px' }}>Imkoniyatni tanlang</h2>
+            <p style={{ color: 'rgba(255,255,255,0.9)', marginBottom: '40px', fontSize: '1.1rem' }}>O'zingizga qulay bo'lgan boshqaruv turini tanlang</p>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '30px' }}>
+              <div onClick={() => setStep(STEPS.PERMISSION)} style={{ background: 'rgba(255,255,255,0.2)', padding: '30px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.4)', cursor: 'pointer', transition: 'all 0.3s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.3)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}>
+                 <div style={{ background: '#FF7E7E', width: '60px', height: '60px', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 15px', fontSize: '1.8rem', boxShadow: '0 5px 15px rgba(255,126,126,0.4)' }}>🧠</div>
+                 <h4 style={{ fontSize: '1.2rem', marginBottom: '5px' }}>Aqlli tahlil paneli</h4>
+                 <p style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.8)' }}>Holatni aniqlash</p>
+              </div>
+              <div onClick={() => onComplete('voice')} style={{ background: 'rgba(255,255,255,0.2)', padding: '30px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.4)', cursor: 'pointer', transition: 'all 0.3s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.3)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}>
+                 <div style={{ background: '#A0A0A0', width: '60px', height: '60px', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 15px', fontSize: '1.8rem', boxShadow: '0 5px 15px rgba(160,160,160,0.4)' }}>🗣️</div>
+                 <h4 style={{ fontSize: '1.2rem', marginBottom: '5px' }}>Ovozli interfeys</h4>
+                 <p style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.8)' }}>Gapirib boshqarish</p>
+              </div>
+              <div onClick={() => onComplete('gesture')} style={{ background: 'rgba(255,255,255,0.2)', padding: '30px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.4)', cursor: 'pointer', transition: 'all 0.3s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.3)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}>
+                 <div style={{ background: '#FFD700', width: '60px', height: '60px', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 15px', fontSize: '1.8rem', boxShadow: '0 5px 15px rgba(255,215,0,0.4)' }}>✋</div>
+                 <h4 style={{ fontSize: '1.2rem', marginBottom: '5px' }}>Imo-ishora</h4>
+                 <p style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.8)' }}>Harakatlar orqali</p>
+              </div>
+              <div onClick={() => onComplete('audio')} style={{ background: 'rgba(255,255,255,0.2)', padding: '30px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.4)', cursor: 'pointer', transition: 'all 0.3s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.3)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}>
+                 <div style={{ background: '#5DE2A2', width: '60px', height: '60px', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 15px', fontSize: '1.8rem', boxShadow: '0 5px 15px rgba(93,226,162,0.4)' }}>🎧</div>
+                 <h4 style={{ fontSize: '1.2rem', marginBottom: '5px' }}>Audio / Eshitish</h4>
+                 <p style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.8)' }}>Ko'zi ojizlar uchun</p>
+              </div>
+            </div>
+            <button onClick={() => setStep(STEPS.INTRO)} style={{ background: 'transparent', color: '#fff', border: '1px solid rgba(255,255,255,0.5)', padding: '12px 30px', borderRadius: '15px', fontSize: '1rem', cursor: 'pointer', transition: 'all 0.3s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>Orqaga qaytish</button>
           </div>
         )}
 
