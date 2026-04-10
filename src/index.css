@@ -1,33 +1,33 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
 
 :root {
-  --bg-primary: #0a0a0f;
-  --bg-secondary: #13141f;
-  --bg-card: rgba(255, 255, 255, 0.03);
-  --bg-card-hover: rgba(255, 255, 255, 0.08);
+  --bg-primary: #0072ff;
+  --bg-secondary: #00c6ff;
+  --bg-card: rgba(255, 255, 255, 0.1);
+  --bg-card-hover: rgba(255, 255, 255, 0.2);
   
   --text-primary: #ffffff;
-  --text-secondary: #a0a0b0;
-  --text-accent: #7b61ff;
+  --text-secondary: rgba(255, 255, 255, 0.8);
+  --text-accent: #ffffff;
   
-  --accent-primary: #7b61ff;
-  --accent-secondary: #00d2ff;
-  --accent-gradient: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+  --accent-primary: #00c6ff;
+  --accent-secondary: #ffffff;
+  --accent-gradient: linear-gradient(135deg, rgba(255,255,255,0.8) 0%, #ffffff 100%);
   
-  --success: #00e676;
+  --success: #00ff88;
   --warning: #ffea00;
   --error: #ff3d00;
   
   --font-main: 'Inter', sans-serif;
   --font-heading: 'Outfit', sans-serif;
   
-  --radius-sm: 8px;
-  --radius-md: 16px;
-  --radius-lg: 24px;
+  --radius-sm: 10px;
+  --radius-md: 18px;
+  --radius-lg: 28px;
   --radius-full: 9999px;
   
-  --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-  --glass-border: 1px solid rgba(255, 255, 255, 0.05);
+  --transition: all 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 * {
@@ -38,15 +38,13 @@
 
 body {
   font-family: var(--font-main);
-  background-color: var(--bg-primary);
+  background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%);
   color: var(--text-primary);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
   overflow-x: hidden;
-  background-image: 
-    radial-gradient(circle at 15% 50%, rgba(123, 97, 255, 0.05), transparent 25%),
-    radial-gradient(circle at 85% 30%, rgba(0, 210, 255, 0.05), transparent 25%);
+  background-attachment: fixed;
 }
 
 h1, h2, h3, h4, h5, h6 {
