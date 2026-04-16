@@ -145,25 +145,15 @@ const SmartOnboarding = ({ onComplete }) => {
             <p style={{ color: 'rgba(255,255,255,0.9)', marginBottom: '40px', fontSize: '1.1rem' }}>O'zingizga qulay bo'lgan boshqaruv turini tanlang</p>
             
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '30px' }}>
-              <div onClick={() => setStep(STEPS.PERMISSION)} style={{ background: 'rgba(255,255,255,0.2)', padding: '30px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.4)', cursor: 'pointer', transition: 'all 0.3s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.3)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}>
-                 <div style={{ background: '#FF7E7E', width: '60px', height: '60px', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 15px', fontSize: '1.8rem', boxShadow: '0 5px 15px rgba(255,126,126,0.4)' }}>🧠</div>
-                 <h4 style={{ fontSize: '1.2rem', marginBottom: '5px' }}>Aqlli tahlil paneli</h4>
-                 <p style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.8)' }}>Holatni aniqlash</p>
-              </div>
-              <div onClick={() => onComplete('voice')} style={{ background: 'rgba(255,255,255,0.2)', padding: '30px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.4)', cursor: 'pointer', transition: 'all 0.3s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.3)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}>
-                 <div style={{ background: '#A0A0A0', width: '60px', height: '60px', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 15px', fontSize: '1.8rem', boxShadow: '0 5px 15px rgba(160,160,160,0.4)' }}>🗣️</div>
-                 <h4 style={{ fontSize: '1.2rem', marginBottom: '5px' }}>Ovozli interfeys</h4>
-                 <p style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.8)' }}>Gapirib boshqarish</p>
-              </div>
               <div onClick={() => onComplete('gesture')} style={{ background: 'rgba(255,255,255,0.2)', padding: '30px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.4)', cursor: 'pointer', transition: 'all 0.3s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.3)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}>
                  <div style={{ background: '#FFD700', width: '60px', height: '60px', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 15px', fontSize: '1.8rem', boxShadow: '0 5px 15px rgba(255,215,0,0.4)' }}>✋</div>
                  <h4 style={{ fontSize: '1.2rem', marginBottom: '5px' }}>Imo-ishora</h4>
                  <p style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.8)' }}>Harakatlar orqali</p>
               </div>
-              <div onClick={() => onComplete('audio')} style={{ background: 'rgba(255,255,255,0.2)', padding: '30px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.4)', cursor: 'pointer', transition: 'all 0.3s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.3)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}>
-                 <div style={{ background: '#5DE2A2', width: '60px', height: '60px', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 15px', fontSize: '1.8rem', boxShadow: '0 5px 15px rgba(93,226,162,0.4)' }}>🎧</div>
-                 <h4 style={{ fontSize: '1.2rem', marginBottom: '5px' }}>Audio / Eshitish</h4>
-                 <p style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.8)' }}>Ko'zi ojizlar uchun</p>
+              <div onClick={() => onComplete('voice')} style={{ background: 'rgba(255,255,255,0.2)', padding: '30px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.4)', cursor: 'pointer', transition: 'all 0.3s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.3)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}>
+                 <div style={{ background: '#A0A0A0', width: '60px', height: '60px', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 15px', fontSize: '1.8rem', boxShadow: '0 5px 15px rgba(160,160,160,0.4)' }}>🗣️</div>
+                 <h4 style={{ fontSize: '1.2rem', marginBottom: '5px' }}>Ovozli interfeys</h4>
+                 <p style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.8)' }}>Gapirib boshqarish</p>
               </div>
             </div>
             <button onClick={() => setStep(STEPS.INTRO)} style={{ background: 'transparent', color: '#fff', border: '1px solid rgba(255,255,255,0.5)', padding: '12px 30px', borderRadius: '15px', fontSize: '1rem', cursor: 'pointer', transition: 'all 0.3s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>Orqaga qaytish</button>
