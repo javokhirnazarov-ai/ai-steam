@@ -1,613 +1,212 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
-/* ──────────────────────────────────────────────────────────────────────────
-   TTS helper — tabiiyroq o‘zbekcha ovoz
-────────────────────────────────────────────────────────────────────────── */
-let currentVoices = [];
 
-function loadVoices() {
-  if (typeof window === 'undefined' || !window.speechSynthesis) return [];
-  const voices = window.speechSynthesis.getVoices() || [];
-  currentVoices = voices;
-  return voices;
-}
-
-if (typeof window !== 'undefined' && window.speechSynthesis) {
-  window.speechSynthesis.onvoiceschanged = () => {
-    loadVoices();
-  };
-  loadVoices();
-}
-
-function pickBestVoice() {
-  if (typeof window === 'undefined' || !window.speechSynthesis) return null;
-  const voices = currentVoices.length ? currentVoices : loadVoices();
-
-  // Cross-browser priority list for Human/AI sound
-  return (
-    // 1. Microsoft Edge Premium (Sabina Neural)
-    voices.find(v => v.name.includes('Sabina') && v.name.includes('Online')) ||
-    // 2. Google Chrome Premium (Uzbek Online)
-    voices.find(v => v.lang.startsWith('uz') && v.name.includes('Google') && v.name.includes('Online')) ||
-    // 3. Any Neural/Natural Uzbek (System/Cloud)
-    voices.find(v => v.lang.startsWith('uz') && (v.name.includes('Neural') || v.name.includes('Natural'))) ||
-    // 4. Google Turkish Neural (Chrome Fallback - sounds more human than local Uzbek robot)
-    voices.find(v => v.lang.startsWith('tr') && v.name.includes('Google') && v.name.includes('Neural')) ||
-    // 5. Any Google Uzbek/Turkish
-    voices.find(v => (v.lang.startsWith('uz') || v.lang.startsWith('tr')) && v.name.includes('Google')) ||
-    // 6. Last resort: Any Uzbek
-    voices.find(v => v.lang.startsWith('uz')) ||
-    null
-  );
-}
-
-function normalizeForSpeech(text = '') {
-  return text
-    .replace(/AI/g, "sun'iy intellekt")
-    .replace(/STEAM/g, "stiy-em")
-    .replace(/'/g, "’") // Help AI engines with Uzbek apostrophe
-    .replace(/O'/g, "O‘")
-    .replace(/G'/g, "G‘")
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-async function doSpeak(text, options = {}) {
-  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
-  window.speechSynthesis.cancel();
-
-  const u = new SpeechSynthesisUtterance(normalizeForSpeech(text));
-  const best = pickBestVoice();
-  
-  if (best) {
-    u.voice = best;
-    // If it's Turkish, it reads Uzbek phonetically (much softer)
-    if (!best.lang.startsWith('uz')) u.lang = best.lang;
-  } else {
-    u.lang = 'uz-UZ';
-  }
-
-  u.rate = options.rate ?? 0.88;
-  u.pitch = options.pitch ?? 0.96;
-  u.volume = 1.0;
-
-  window.speechSynthesis.speak(u);
-}
-
-/* ──────────────────────────────────────────────────────────────────────────
-   Tabiiyroq matn generatorlari
-────────────────────────────────────────────────────────────────────────── */
-const randomPick = (arr) => arr[Math.floor(Math.random() * arr.length)];
-
-function getSectionGreeting(sectionKey) {
-  const variants = {
-    mikro: [
-      "Birinchi bobga xush kelibsiz. Bu yerda robototexnika va sun’iy intellektni sodda va qiziqarli tarzda o‘rganamiz. Tayyormisiz?",
-      "Zo‘r, birinchi bobni ochdik. Endi robotlar qanday ishlashi va sun’iy intellekt nimalarga qodirligini birga ko‘rib chiqamiz.",
-      "Birinchi bobdamiz. Bu qismda siz robototexnika hamda sun’iy intellekt haqida tushunarli misollar bilan tanishasiz."
-    ],
-    lab: [
-      "Virtual laboratoriyaga xush kelibsiz. Bu yerda tajribalarni xavfsiz tarzda sinab ko‘rishingiz mumkin.",
-      "Ikkinchi bob ochildi. Endi laboratoriya usulida, lekin xavfsiz va qulay muhitda ishlaymiz.",
-      "Yaxshi, virtual laboratoriyaga o‘tdik. Keling, tajribalarni birma-bir ko‘rib chiqamiz."
-    ],
-    task: [
-      "Uchinchi bobga kirdik. Endi bilimingizni sinab ko‘rish vaqti keldi.",
-      "Zo‘r, topshiriqlar qismidamiz. Savollarga bemalol javob berishingiz mumkin.",
-      "Endi amaliy qismga o‘tdik. Bu yerda o‘rganganlaringizni sinab ko‘rasiz."
-    ],
-    hub: [
-      "Darslar oynasiga qaytdik. Kerakli bobni ayting yoki ekrandan tanlang.",
-      "Asosiy bo‘limga qaytdik. Birinchi, ikkinchi yoki uchinchi bobni tanlashingiz mumkin.",
-      "Bosh sahifadamiz. Qaysi bobni ochamiz?"
-    ]
-  };
-
-  return randomPick(variants[sectionKey] || variants.hub);
-}
-
-/* ──────────────────────────────────────────────────────────────────────────
-   Section config
-────────────────────────────────────────────────────────────────────────── */
-const SECTIONS = {
-  mikro: {
-    title: '📖 Birinchi Bob — Mikro kurslar',
-    color: '#7B61FF',
-    border: '1px solid #7B61FF',
-    bg: 'linear-gradient(135deg, rgba(123,97,255,.13) 0%, #0000 100%)',
-    data: [
-      {
-        id: 'robot',
-        icon: '🤖',
-        h: 'Robototexnika',
-        p: "Bu darsda robotlar qanday harakat qilishi, sensorlar nima vazifa bajarishi va motorlar qanday ishlashini sodda misollar orqali bilib olasiz."
-      },
-      {
-        id: 'ai',
-        icon: '🧠',
-        h: "Sun’iy intellekt",
-        p: "Bu qismda sun’iy intellekt yuzni qanday taniydi, ovozni qanday tushunadi va inson bilan qanday muloqot qilishini o‘rganasiz."
-      }
-    ],
-    body: (data) => (
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginTop: 24 }}>
-        {data.map(c => (
-          <div key={c.h} style={{ background: 'rgba(123,97,255,.1)', padding: 28, borderRadius: 18, borderLeft: '5px solid #7B61FF' }}>
-            <h2 style={{ fontSize: '1.4rem', marginBottom: 12 }}>{c.icon} {c.h}</h2>
-            <p style={{ opacity: .85, lineHeight: 1.75 }}>{c.p}</p>
-          </div>
-        ))}
-      </div>
-    ),
-  },
-
-  lab: {
-    title: '⚡ Ikkinchi Bob — Virtual laboratoriya',
-    color: '#00D2FF',
-    border: '1px solid #00D2FF',
-    bg: 'linear-gradient(135deg, rgba(0,210,255,.13) 0%, #0000 100%)',
-    data: {
-      h: 'Elektr zanjiri tajribasi',
-      p: 'Bu yerda xavfsiz virtual tajribalarni sinab ko‘rasiz. Hozir elektr zanjirlariga oid interaktiv mashqlar tayyorlanmoqda.'
-    },
-    body: (data) => (
-      <div style={{ textAlign: 'center', marginTop: 60 }}>
-        <div style={{ fontSize: '6rem', marginBottom: 20, display: 'inline-block', animation: 'pulse 2s infinite' }}>🔋</div>
-        <h2 style={{ fontSize: '1.8rem', marginBottom: 16 }}>{data.h}</h2>
-        <p style={{ opacity: .75, fontSize: '1.1rem', lineHeight: 1.7 }}>{data.p}</p>
-      </div>
-    ),
-  },
-
-  task: {
-    title: '🎯 Uchinchi Bob — Topshiriqlar',
-    color: '#00E676',
-    border: '1px solid #00E676',
-    bg: 'linear-gradient(135deg, rgba(0,230,118,.13) 0%, #0000 100%)',
-    data: {
-      h: 'Ovozli topshiriq №1',
-      q: '“Nega quyosh panellari elektr energiyasi hosil qiladi?”',
-      p: 'Javobingizni ovoz orqali aytishingiz mumkin.'
-    },
-    body: (data) => (
-      <div style={{ marginTop: 24 }}>
-        <div style={{ background: 'rgba(0,230,118,.08)', padding: 40, borderRadius: 20, border: '1px dashed #00E676' }}>
-          <h2 style={{ marginBottom: 20, fontSize: '1.4rem' }}>{data.h}</h2>
-          <p style={{ fontSize: '1.7rem', fontWeight: 500, lineHeight: 1.5 }}>{data.q}</p>
-          <p style={{ color: 'rgba(255,255,255,.55)', marginTop: 20 }}>{data.p}</p>
-        </div>
-      </div>
-    ),
-  },
+const STEPS = {
+  INTRO: 'intro',
+  OPTIONS: 'options',
+  PERMISSION: 'permission',
+  TESTING: 'testing',
+  RESULT: 'result'
 };
 
-/* ──────────────────────────────────────────────────────────────────────────
-   Main component
-────────────────────────────────────────────────────────────────────────── */
-export default function VoiceInterface({ onSwitch }) {
-  const [view, setView] = useState('hub');
-  const [transcript, setTranscript] = useState('');
-  const [listening, setListening] = useState(false);
-  const [errMsg, setErrMsg] = useState('');
-
-  const viewRef = useRef('hub');
-  const cooldownRef = useRef(0);
-  const recRef = useRef(null);
-  const mountedRef = useRef(true);
-
-  useEffect(() => {
-    viewRef.current = view;
-  }, [view]);
+const SmartOnboarding = ({ onComplete }) => {
+  const [step, setStep] = useState(STEPS.INTRO);
+  const [testProgress, setTestProgress] = useState(0);
+  const [testStage, setTestStage] = useState('');
+  const [recommended, setRecommended] = useState('');
+  const [isListeningForCommand, setIsListeningForCommand] = useState(false);
+  const [voiceTranscript, setVoiceTranscript] = useState('');
+  const videoRef = useRef(null);
 
   useEffect(() => {
     return () => {
-      mountedRef.current = false;
+      if (videoRef.current && videoRef.current.srcObject) {
+        videoRef.current.srcObject.getTracks().forEach(track => track.stop());
+        videoRef.current.srcObject = null;
+      }
     };
   }, []);
 
-  const say = useCallback(async (text) => {
-    await doSpeak(text, { rate: 0.92, pitch: 0.96, volume: 1 });
-  }, []);
+  const startOnboarding = () => setStep(STEPS.OPTIONS);
 
-  const goTo = useCallback((section) => {
-    setView(section);
-    viewRef.current = section;
-    setTranscript('');
-    try { recRef.current?.stop(); } catch (e) { }
-    say(getSectionGreeting(section));
-  }, [say]);
-
-  const goHub = useCallback(() => {
-    setView('hub');
-    viewRef.current = 'hub';
-    setTranscript('');
-    try { recRef.current?.stop(); } catch (e) { }
-    say(getSectionGreeting('hub'));
-  }, [say]);
-
-  const [lastHeard, setLastHeard] = useState('');
-
-  const processCmd = useCallback((raw) => {
-    const now = Date.now();
-    if (now - cooldownRef.current < 600) return; 
-
-    const cmd = (raw || '').toLowerCase().trim();
-    if (!cmd) return;
-
-    console.log('[Voice] Processing:', cmd);
-    setLastHeard(cmd); // Show on screen for user debugging
-
-    const normalized = cmd.toLowerCase();
-    
-    // Simplest possible matching for 'Back'
-    if (normalized.includes('orqaga') || 
-        normalized.includes('stop') || 
-        normalized.includes('qayt') || 
-        normalized.includes('menyu') ||
-        normalized.includes('chiqish')) {
-      
-      console.warn('[Voice] SUCCESS: Back matched');
-      window.speechSynthesis.cancel();
-      cooldownRef.current = now;
-      
-      if (viewRef.current !== 'hub') {
-        say("Xo‘p, darslar oynasiga qaytamiz");
-        goHub();
-      } else {
-        say("Xo‘p, portalni yopaman");
-        onSwitch?.('onboarding');
-      }
-      setTranscript(''); 
-      return;
-    }
-
-    if (viewRef.current === 'hub') {
-      if (normalized.includes('bir') || normalized.includes('mikro')) {
-        cooldownRef.current = now;
-        goTo('mikro');
-        setTranscript('');
-        return;
-      }
-      if (normalized.includes('ikki') || normalized.includes('lab')) {
-        cooldownRef.current = now;
-        goTo('lab');
-        setTranscript('');
-        return;
-      }
-      if (normalized.includes('uch') || normalized.includes('vazifa') || normalized.includes('topshiriq')) {
-        cooldownRef.current = now;
-        goTo('task');
-        setTranscript('');
-        return;
-      }
-    }
-
-    // Sub-items
-    if (viewRef.current === 'mikro') {
-      if (normalized.includes('robot')) {
-        cooldownRef.current = now;
-        say(SECTIONS.mikro.data[0].p);
-        setTranscript('');
-        return;
-      }
-      if (normalized.includes('intel') || normalized.includes('ai')) {
-        cooldownRef.current = now;
-        say(SECTIONS.mikro.data[1].p);
-        setTranscript('');
-        return;
-      }
-    }
-
-    if (viewRef.current === 'lab') {
-      if (normalized.includes('elektr') || normalized.includes('zanjir') || normalized.includes('tajriba')) {
-        cooldownRef.current = now;
-        say(SECTIONS.lab.data.p);
-        setTranscript('');
-        return;
-      }
-    }
-
-    if (viewRef.current === 'task') {
-      if (normalized.includes('panell') || normalized.includes('quyosh') || normalized.includes('vazifa')) {
-        cooldownRef.current = now;
-        say("Ushbu topshiriq quyosh panellari haqida. O'ylaymanki, siz buni ajoyib tarzda bajarasiz!");
-        setTranscript('');
-        return;
-      }
-    }
-  }, [goHub, goTo, onSwitch, say]);
-
-  useEffect(() => {
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-
-    if (!SR) {
-      setErrMsg("Bu brauzerda ovozli boshqaruv ishlamayapti. Google Chrome orqali urinib ko‘ring.");
-      return;
-    }
-
-    const rec = new SR();
-    recRef.current = rec;
-    rec.lang = 'uz-UZ';
-    rec.continuous = true;
-    rec.interimResults = true;
-
-    let isActive = true;
-
-    rec.onstart = () => {
-      if (mountedRef.current) setListening(true);
-    };
-
-    rec.onerror = (e) => {
-      console.error('[Voice] error:', e.error);
-
-      if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
-        isActive = false;
-        if (mountedRef.current) {
-          setListening(false);
-          setErrMsg("Mikrofonga ruxsat berilmagan. Brauzerda mikrofon ruxsatini yoqing.");
-        }
-      }
-    };
-
-    rec.onend = () => {
-      if (!mountedRef.current) return;
-
-      if (isActive) {
-        setTimeout(() => {
-          try { rec.start(); } catch (_) { }
-        }, 250);
-      } else {
-        setListening(false);
-      }
-    };
-
-    rec.onresult = (e) => {
-      let finalTranscript = '';
-      let interimTranscript = '';
-
-      for (let i = e.resultIndex; i < e.results.length; ++i) {
-        if (e.results[i].isFinal) {
-          finalTranscript += e.results[i][0].transcript;
-        } else {
-          interimTranscript += e.results[i][0].transcript;
-        }
-      }
-
-      const currentText = (finalTranscript || interimTranscript).trim();
-      if (currentText) {
-        setTranscript(currentText);
-        processCmd(currentText);
-      }
-    };
-
-    const startMic = () => {
-      try { 
-        rec.start(); 
-        setListening(true);
-      } catch (err) {
-        console.warn('[Voice] Start attempt ignored:', err.message);
-      }
-    };
-
-    startMic();
-
-    setTimeout(() => {
-      say("Ovozli darslar portaliga xush kelibsiz. Birinchi, ikkinchi yoki uchinchi bobni aytishingiz mumkin.");
-    }, 700);
-
-    return () => {
-      isActive = false;
-      rec.onend = null;
-      try { rec.stop(); } catch (_) { }
-      window.speechSynthesis?.cancel();
-    };
-  }, [processCmd, say]);
-
-  const restartMic = () => {
-    setErrMsg("");
-    if (recRef.current) {
-      try {
-        recRef.current.stop();
-        setTimeout(() => recRef.current.start(), 300);
-      } catch (e) {
-        try { recRef.current.start(); } catch (err) {}
-      }
+  const requestPermissions = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      if (videoRef.current) videoRef.current.srcObject = stream;
+      setStep(STEPS.TESTING);
+      runTests();
+    } catch (err) {
+      setStep(STEPS.TESTING);
+      runTests();
     }
   };
 
-  const HubView = () => (
-    <div className="animate-fade-in" style={{ padding: 20 }}>
-      <h1 style={{ color: '#00D2FF', marginBottom: 8, fontSize: '2rem' }}>📚 Darslar oynasi</h1>
-      <p style={{ opacity: .65, marginBottom: 36 }}>
-        Bob nomini ayting yoki kartochkalardan birini tanlang:
-      </p>
+  useEffect(() => {
+    // Sentyabr landing sahifasida ovozli buyruqlarni yanada aniqroq eshitish
+    if (step === STEPS.INTRO || step === STEPS.RESULT) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (SpeechRecognition) {
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'uz-UZ';
+            recognition.continuous = true;
+            recognition.interimResults = true; // Judiyam muhim: Kutmasdan darhol javob qaytarish uchun
+            
+            let isActive = true;
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 20 }}>
-        {[
-          { key: 'mikro', icon: '📖', label: 'Birinchi bob', sub: 'Mikro kurslar' },
-          { key: 'lab', icon: '⚡', label: 'Ikkinchi bob', sub: 'Virtual laboratoriya' },
-          { key: 'task', icon: '🎯', label: 'Uchinchi bob', sub: 'Topshiriqlar' },
-        ].map(({ key, icon, label, sub }) => (
-          <button
-            key={key}
-            onClick={() => goTo(key)}
-            style={{
-              background: 'rgba(255,255,255,.03)',
-              border: '2px solid rgba(255,255,255,.1)',
-              borderRadius: 22,
-              padding: '40px 20px',
-              cursor: 'pointer',
-              textAlign: 'center',
-              color: '#fff',
-              transition: 'all .25s',
-              fontSize: '1rem'
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.borderColor = '#00D2FF';
-              e.currentTarget.style.background = 'rgba(0,210,255,.07)';
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.borderColor = 'rgba(255,255,255,.1)';
-              e.currentTarget.style.background = 'rgba(255,255,255,.03)';
-            }}
-          >
-            <span style={{ fontSize: '3.5rem', display: 'block', marginBottom: 14 }}>{icon}</span>
-            <strong style={{ fontSize: '1.05rem' }}>{label}</strong>
-            <p style={{ opacity: .58, marginTop: 6, fontSize: '.85rem' }}>{sub}</p>
-          </button>
-        ))}
-      </div>
+            recognition.onresult = (event) => {
+                let txt = '';
+                for (let i = 0; i < event.results.length; i++) {
+                    txt += event.results[i][0].transcript;
+                }
+                const cmd = txt.toLowerCase().trim();
+                setVoiceTranscript(cmd);
+                
+                if (/boshla|davom|kir|yur|ketdik/.test(cmd)) {
+                    if (step === STEPS.INTRO) setStep(STEPS.OPTIONS);
+                }
+                if (/ovoz|dars/.test(cmd)) {
+                    onComplete('voice');
+                }
+            };
+            
+            recognition.onstart = () => setIsListeningForCommand(true);
+            recognition.onerror = (e) => { 
+                if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+                    isActive = false;
+                    setIsListeningForCommand(false);
+                    setVoiceTranscript("Mikrofonga ruxsat yo'q. Brauzerdan ruxsat bering.");
+                }
+            };
+            recognition.onend = () => { 
+                if (step === STEPS.INTRO && isActive) {
+                    setTimeout(() => { try { recognition.start(); } catch(err) {} }, 300); 
+                }
+            };
+            
+            try { recognition.start(); } catch(e) {}
+            
+            return () => { 
+                isActive = false; 
+                try { recognition.stop(); } catch(e) {} 
+            };
+        }
+    }
+  }, [step, onComplete]);
 
-      <div style={{ marginTop: 32, padding: 20, background: 'rgba(0,0,0,.35)', borderRadius: 14, textAlign: 'center' }}>
-        <p style={{ fontSize: '1.15rem', fontStyle: 'italic', color: '#00D2FF' }}>
-          {transcript ? `"${transcript}"` : '"Masalan: birinchi bob, ikkinchi bob..."'}
-        </p>
-      </div>
-      {/* Speech Feedback Bubble */}
-      {lastHeard && (
-        <div style={{
-          position: 'fixed',
-          bottom: '100px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          background: 'rgba(0, 210, 255, 0.9)',
-          color: '#000',
-          padding: '8px 20px',
-          borderRadius: '25px',
-          fontSize: '0.9rem',
-          fontWeight: 'bold',
-          boxShadow: '0 5px 20px rgba(0,0,0,0.4)',
-          zIndex: 10001,
-          animation: 'slideInUp 0.3s ease-out'
-        }}>
-          🎙️ Eshitildi: "{lastHeard}"
-        </div>
-      )}
-    </div>
-  );
-
-  const SectionView = () => {
-    const s = SECTIONS[view];
-    return (
-      <div
-        className="animate-fade-in"
-        style={{ padding: 40, borderRadius: 28, border: s.border, background: s.bg, minHeight: 460 }}
-      >
-        <h1 style={{ color: s.color, marginBottom: 8, fontSize: '1.8rem' }}>{s.title}</h1>
-        <p style={{ opacity: .58, fontSize: '.95rem' }}>
-          Ortga qaytish uchun “Orqaga” deng yoki tugmani bosing.
-        </p>
-
-        {s.body(s.data)}
-
-        <div style={{ marginTop: 32, padding: 16, background: 'rgba(0,0,0,.35)', borderRadius: 12, textAlign: 'center' }}>
-          <p style={{ fontStyle: 'italic', color: s.color, fontSize: '1.1rem' }}>
-            {transcript ? `"${transcript}"` : '"Buyruq kutilyapti..."'}
-          </p>
-        </div>
-      </div>
-    );
+  const runTests = () => {
+    const stages = ["Ovozli tahlil...", "Imo-ishora tahlili...", "Natijani kutish..."];
+    let progress = 0;
+    stages.forEach((s, i) => {
+      setTimeout(() => { setTestStage(s); }, i * 2000);
+      const interval = setInterval(() => {
+        setTestProgress(p => p < 100 ? p + 1 : 100);
+      }, 60);
+      setTimeout(() => clearInterval(interval), (i+1) * 2000);
+    });
+    setTimeout(() => { setRecommended('audio'); setStep(STEPS.RESULT); }, 6000);
   };
 
   return (
-    <div className="dashboard-wrapper animate-fade-in">
-      <header className="header" style={{ paddingBottom: 18 }}>
-        <div>
-          <h1 className="title text-gradient">Inclusive AI Portal</h1>
-          <p className="text-secondary">Ovozli boshqaruv platformasi</p>
-        </div>
+    <div className="onboarding-container" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'radial-gradient(circle at center, #1e293b 0%, #0f172a 100%)', color: '#fff' }}>
+      <div style={{ maxWidth: '800px', width: '90%', background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', padding: '60px 40px', borderRadius: '40px', border: '1px solid rgba(255,255,255,0.3)', boxShadow: '0 15px 35px rgba(0,0,0,0.2)', textAlign: 'center' }}>
+        
+        {step === STEPS.INTRO && (
+          <div className="animate-fade-in">
+            <h1 style={{ fontSize: '4rem', fontWeight: '800', marginBottom: '15px', textShadow: '0 2px 10px rgba(0,0,0,0.1)' }}>
+              Inclusive STEAM AI
+            </h1>
+            <p style={{ fontSize: '1.3rem', color: 'rgba(255,255,255,0.9)', marginBottom: '50px' }}>
+               Barchaga moslashtirilgan ta'lim platformasiga xush kelibsiz.
+            </p>
 
-        <div className="flex-center" style={{ gap: 14 }}>
-          <span
-            className="interface-badge"
-            style={{
-              borderColor: listening ? '#00D2FF' : '#555',
-              color: listening ? '#00D2FF' : '#999',
-              background: listening ? 'rgba(0,210,255,.1)' : 'rgba(255,255,255,.03)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8
-            }}
-          >
-            {listening ? (
-              <>
-                <span
-                  style={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: '50%',
-                    background: '#00D2FF',
-                    display: 'inline-block',
-                    animation: 'pulse 1.2s infinite'
-                  }}
-                />
-                🎙️ Eshitib turibman
-              </>
-            ) : '🔇 Kutish rejimi'}
-          </span>
-
-          <button 
-             className="back-btn" 
-             style={{ padding: '8px 12px', borderColor: 'rgba(255,255,255,0.2)' }}
-             onClick={restartMic}
-             title="Mikrofonni qayta yoqish"
-          >
-            🔄 Qayta yoqish
-          </button>
-
-          {view !== 'hub' && (
-            <button className="back-btn" onClick={goHub}>⬅ Orqaga</button>
-          )}
-
-          <button className="back-btn" onClick={() => onSwitch?.('onboarding')}>
-            Chiqish
-          </button>
-        </div>
-      </header>
-
-      {errMsg && (
-        <div
-          style={{
-            background: 'rgba(255,60,60,.12)',
-            border: '1px solid #f55',
-            borderRadius: 12,
-            padding: '16px 20px',
-            marginBottom: 20,
-            color: '#f88'
-          }}
-        >
-          ⚠️ {errMsg}
-        </div>
-      )}
-
-      <div className="content-section" style={{ gridTemplateColumns: '1fr 280px' }}>
-        <div className="main-panel">
-          {view === 'hub' ? <HubView /> : <SectionView />}
-        </div>
-
-        <div className="side-panel">
-          <h3 className="panel-title">Audio qo‘llanma</h3>
-          <div className="course-list">
-            <div className="course-item">
-              <p>📍 <b>Hozir:</b> {view === 'hub' ? 'Darslar oynasi' : SECTIONS[view]?.title}</p>
+            <div style={{ height: '80px', marginBottom: '30px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+              {isListeningForCommand && (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 'bold' }}>
+                    <div className="pulse-dot" style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#fff', animation: 'pulse 1.5s infinite' }}></div>
+                    <span style={{color: '#fff'}}>Sizni eshityapman...</span>
+                  </div>
+                  {voiceTranscript && (
+                    <p style={{ fontStyle: 'italic', fontWeight: '500', color: '#fff', margin: 0, textShadow: '1px 1px 2px rgba(0,0,0,0.5)' }}>"{voiceTranscript}"</p>
+                  )}
+                </div>
+              )}
             </div>
+            <button onClick={startOnboarding} style={{ background: '#fff', color: '#0072ff', border: 'none', padding: '18px 60px', borderRadius: '20px', fontSize: '1.2rem', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px', margin: '0 auto', boxShadow: '0 10px 30px rgba(0, 114, 255, 0.3)', transition: 'transform 0.3s' }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
+               Boshlash 
+               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14m-7-7 7 7-7 7"/></svg>
+            </button>
+          </div>
+        )}
 
-            <div className="course-item">
-              <p style={{ lineHeight: 1.8 }}>
-                🎤 <b>Ovozli buyruqlar:</b><br />
-                “Birinchi bob” — 1-bobni ochadi<br />
-                “Ikkinchi bob” — 2-bobni ochadi<br />
-                “Uchinchi bob” — 3-bobni ochadi<br />
-                “Orqaga” — oldingi sahifaga qaytaradi
-              </p>
+        {step === STEPS.OPTIONS && (
+          <div className="animate-fade-in">
+            <h2 style={{ fontSize: '2.5rem', marginBottom: '15px' }}>Imkoniyatni tanlang</h2>
+            <p style={{ color: 'rgba(255,255,255,0.9)', marginBottom: '40px', fontSize: '1.1rem' }}>O'zingizga qulay bo'lgan boshqaruv turini tanlang</p>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '30px' }}>
+              <div onClick={() => onComplete('gesture')} style={{ background: 'rgba(255,255,255,0.2)', padding: '30px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.4)', cursor: 'pointer', transition: 'all 0.3s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.3)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}>
+                 <div style={{ background: '#FFD700', width: '60px', height: '60px', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 15px', fontSize: '1.8rem', boxShadow: '0 5px 15px rgba(255,215,0,0.4)' }}>✋</div>
+                 <h4 style={{ fontSize: '1.2rem', marginBottom: '5px' }}>Imo-ishora</h4>
+                 <p style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.8)' }}>Harakatlar orqali</p>
+              </div>
+              <div onClick={() => onComplete('voice')} style={{ background: 'rgba(255,255,255,0.2)', padding: '30px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.4)', cursor: 'pointer', transition: 'all 0.3s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.3)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}>
+                 <div style={{ background: '#A0A0A0', width: '60px', height: '60px', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 15px', fontSize: '1.8rem', boxShadow: '0 5px 15px rgba(160,160,160,0.4)' }}>🗣️</div>
+                 <h4 style={{ fontSize: '1.2rem', marginBottom: '5px' }}>Ovozli interfeys</h4>
+                 <p style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.8)' }}>Gapirib boshqarish</p>
+              </div>
             </div>
+            <button onClick={() => setStep(STEPS.INTRO)} style={{ background: 'transparent', color: '#fff', border: '1px solid rgba(255,255,255,0.5)', padding: '12px 30px', borderRadius: '15px', fontSize: '1rem', cursor: 'pointer', transition: 'all 0.3s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>Orqaga qaytish</button>
+          </div>
+        )}
 
-            <div className="course-item" style={{ background: 'rgba(123,97,255,.1)', fontSize: '.85rem', lineHeight: 1.7 }}>
-              ℹ️ Har bir bob ochilganda tizim sizga tabiiyroq ovoz bilan qisqacha yo‘l-yo‘riq beradi.
+        {step === STEPS.PERMISSION && (
+          <div className="animate-fade-in" style={{ padding: '40px 0' }}>
+            <h2 style={{ fontSize: '2rem', marginBottom: '20px' }}>Ruxsatlarni olish</h2>
+            <p style={{ color: 'rgba(255,255,255,0.6)', marginBottom: '40px' }}>Tahlil qilishimiz uchun kamera va mikrofonga ruxsat bering.</p>
+            <div style={{ display: 'flex', gap: '20px', justifyContent: 'center' }}>
+              <button onClick={requestPermissions} style={{ background: '#7B61FF', color: '#fff', border: 'none', padding: '15px 40px', borderRadius: '15px', fontSize: '1.1rem', cursor: 'pointer' }}>Ruxsat berish</button>
+              <button onClick={() => { setStep(STEPS.TESTING); runTests(); }} style={{ background: 'rgba(255,255,255,0.05)', color: '#fff', border: 'none', padding: '15px 40px', borderRadius: '15px', fontSize: '1.1rem', cursor: 'pointer' }}>O'tkazib yuborish</button>
             </div>
           </div>
-        </div>
+        )}
+
+        {step === STEPS.TESTING && (
+          <div className="animate-fade-in" style={{ padding: '40px 0' }}>
+            <div style={{ width: '300px', height: '220px', margin: '0 auto 30px', borderRadius: '20px', overflow: 'hidden', background: '#000', border: '2px solid #7B61FF' }}>
+               <video ref={videoRef} autoPlay playsInline muted style={{ width: '100%', height: '100%', objectFit: 'cover' }}></video>
+            </div>
+            <h3 style={{ fontSize: '1.5rem', marginBottom: '20px' }}>{testStage}</h3>
+            <div style={{ width: '100%', height: '8px', background: 'rgba(255,255,255,0.1)', borderRadius: '10px', overflow: 'hidden' }}>
+               <div style={{ width: `${testProgress}%`, height: '100%', background: '#7B61FF', transition: 'width 0.1s' }}></div>
+            </div>
+          </div>
+        )}
+
+        {step === STEPS.RESULT && (
+          <div className="animate-fade-in">
+            <h2 style={{ fontSize: '2.5rem', marginBottom: '10px' }}>Tahlil tayyor! 🎉</h2>
+            <p style={{ color: 'rgba(255,255,255,0.6)', marginBottom: '40px' }}>Siz uchun tanlangan eng qulay interfeys:</p>
+            
+            <div style={{ background: 'rgba(0, 210, 255, 0.1)', padding: '30px', borderRadius: '25px', border: '1px solid #00D2FF', display: 'flex', alignItems: 'center', gap: '20px', margin: '0 auto 50px', textAlign: 'left' }}>
+               <div style={{ fontSize: '3rem' }}>🎧</div>
+               <div>
+                  <h4 style={{ fontSize: '1.3rem', color: '#00D2FF' }}>Audio Interfeys</h4>
+                  <p style={{ opacity: 0.6 }}>Ovoz va eshitish orqali boshqarish tizimi.</p>
+               </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
+              <button onClick={() => onComplete('gesture')} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '20px', borderRadius: '20px', cursor: 'pointer' }}>✋ Imo-ishora</button>
+              <button onClick={() => onComplete('voice')} style={{ background: 'rgba(255,255,255,0.03)', border: '2px solid #00D2FF', color: '#fff', padding: '20px', borderRadius: '20px', cursor: 'pointer' }}>🎙️ Audio Portal</button>
+              <button onClick={() => onComplete('standard')} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '20px', borderRadius: '20px', cursor: 'pointer' }}>🖱️ Standart</button>
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   );
-}
+};
+
+export default SmartOnboarding;
