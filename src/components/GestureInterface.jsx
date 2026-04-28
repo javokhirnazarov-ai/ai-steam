@@ -13,6 +13,7 @@ const GestureInterface = ({ onSwitch }) => {
   const [activeTheme, setActiveTheme] = useState(null);
   const [debugData, setDebugData] = useState({ word: 'Yo\'q', xDiff: 0, yDiff: 0 });
   const [isTranslating, setIsTranslating] = useState(false);
+  const [activeVideo, setActiveVideo] = useState(null);
 
   const lastGestureRef = useRef("");
   const gestureCountRef = useRef(0);
@@ -38,23 +39,58 @@ const GestureInterface = ({ onSwitch }) => {
 
   const modulesData = {
     1: {
-      title: "1-Modul: Sun'iy intellekt va STEAM",
+      title: "1-Modul: Til va nutq markazi",
+      icon: "🗣️",
       themes: [
-        { id: "1.1", name: "Sun'iy intellektga kirish" },
-        { id: "1.2", name: "STEAM ta'limi asoslari" },
-        { id: "1.3", name: "Algoritmlar va mantiq" },
-        { id: "1.4", name: "Neyron tarmoqlar qanday ishlaydi?" },
-        { id: "1.5", name: "Kelajak texnologiyalari" }
+        { id: "1.1", name: "Nutqning tovush madaniyati", video: "/videodarslar/1.1.mp4" },
+        { id: "1.2", name: "Lug‘at boyligini oshirish" },
+        { id: "1.3", name: "Nutqning grammatik qurilishi" },
+        { id: "1.4", name: "Bog‘lanishli nutqni rivojlantirish" },
+        { id: "1.5", name: "O‘qishga tayyorgarlik" }
       ]
     },
     2: {
-      title: "2-Modul: Robototexnika va Muhandislik",
+      title: "2-Modul: Qurish-yasash va matematika",
+      icon: "📐",
       themes: [
-        { id: "2.1", name: "Elektronika asoslari" },
-        { id: "2.2", name: "Datchiklar va sensorlar" },
-        { id: "2.3", name: "Robotlarni modellashtirish" },
-        { id: "2.4", name: "Blokli dasturlash" },
-        { id: "2.5", name: "Aqlli uy tizimlari" }
+        { id: "2.1", name: "Geometrik shakllar" },
+        { id: "2.2", name: "Son va sanoq" },
+        { id: "2.3", name: "Konstruktsiyalash asoslari" },
+        { id: "2.4", name: "O‘lchash va miqdor" },
+        { id: "2.5", name: "Fazo va vaqt tushunchasi" }
+      ]
+    },
+    3: {
+      title: "3-Modul: San’at markazi",
+      icon: "🎨",
+      themes: [
+        { id: "3.1", name: "Rasm chizish texnikasi" },
+        { id: "3.2", name: "Loy va plastilin bilan ishlash" },
+        { id: "3.3", name: "Applikatsiya va qirqish" },
+        { id: "3.4", name: "Ranglar uyg‘unligi" },
+        { id: "3.5", name: "Musiqa va ijodkorlik" }
+      ]
+    },
+    4: {
+      title: "4-Modul: Syujetli-rolli o‘yinlar",
+      icon: "🎭",
+      themes: [
+        { id: "4.1", name: "Dramatizatsiya va sahna" },
+        { id: "4.2", name: "Kasblarni o‘rganamiz" },
+        { id: "4.3", name: "Muloqot madaniyati" },
+        { id: "4.4", name: "Xalq ertaklari talqini" },
+        { id: "4.5", name: "Ijtimoiy rollar" }
+      ]
+    },
+    5: {
+      title: "5-Modul: Ilm-fan va tabiat markazi",
+      icon: "🔬",
+      themes: [
+        { id: "5.1", name: "Atrof-muhitni o‘rganish" },
+        { id: "5.2", name: "Tabiatdagi tajribalar" },
+        { id: "5.3", name: "O‘simliklar dunyosi" },
+        { id: "5.4", name: "Jonivorlar olami" },
+        { id: "5.5", name: "Ekologik madaniyat" }
       ]
     }
   };
@@ -136,68 +172,64 @@ const GestureInterface = ({ onSwitch }) => {
       let yDiff = 0;
 
       if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-        console.log('Hand detected', results.multiHandLandmarks.length);
         for (const landmarks of results.multiHandLandmarks) {
           if (window.drawConnectors && window.drawLandmarks && window.HAND_CONNECTIONS) {
             window.drawConnectors(canvasCtx, landmarks, window.HAND_CONNECTIONS, { color: '#00FF00', lineWidth: 3 });
             window.drawLandmarks(canvasCtx, landmarks, { color: '#FF0000', lineWidth: 1, radius: 3 });
           }
           
-          const isThumbOpen = Math.abs(landmarks[4].x - landmarks[2].x) > 0.08 || landmarks[4].y < landmarks[2].y - 0.05;
-          const isIndexOpen = landmarks[8].y < landmarks[6].y + 0.05; 
-          const isMiddleOpen = landmarks[12].y < landmarks[10].y + 0.05;
-          const isRingOpen = landmarks[16].y < landmarks[14].y + 0.05;
-          const isPinkyOpen = landmarks[20].y < landmarks[18].y + 0.05;
+          const isThumbOpen = landmarks[4].y < landmarks[3].y - 0.01;
+          const isIndexOpen = landmarks[8].y < landmarks[6].y; 
+          const isMiddleOpen = landmarks[12].y < landmarks[10].y;
+          const isRingOpen = landmarks[16].y < landmarks[14].y;
+          const isPinkyOpen = landmarks[20].y < landmarks[18].y;
 
-          // 5 barmoq ochiq (Modullar)
-          if (isIndexOpen && isMiddleOpen && isRingOpen && isPinkyOpen && isThumbOpen) {
+          const fingerCount = [isIndexOpen, isMiddleOpen, isRingOpen, isPinkyOpen, isThumbOpen].filter(Boolean).length;
+
+          if (fingerCount === 5) {
             detectedWord = "Modullar";
-          } 
-          // ✊ Musht (Orqaga qaytish)
-          else if (!isIndexOpen && !isMiddleOpen && !isRingOpen && !isPinkyOpen) {
-            detectedWord = "Orqaga";
-          }
-          // ☝️ Bir barmoq (1-Modul) - Index ochiq, qolgan 3 tasi yopiq, bosh barmoq muhim emas
-          else if (isIndexOpen && !isMiddleOpen && !isRingOpen && !isPinkyOpen) {
-            detectedWord = "Bir";
-          }
-          // ✌️ Ikki barmoq (2-Modul) - Index va O'rta ochiq, qolgan 2 tasi yopiq
-          else if (isIndexOpen && isMiddleOpen && !isRingOpen && !isPinkyOpen) {
+          } else if (fingerCount === 4) {
+            detectedWord = "To'rt";
+          } else if (fingerCount === 3) {
+            detectedWord = "Uch";
+          } else if (fingerCount === 2) {
             detectedWord = "Ikki";
-          }
-          else if (isThumbOpen && !isIndexOpen && !isMiddleOpen && !isRingOpen && !isPinkyOpen) {
-            detectedWord = "Ajoyib";
+          } else if (fingerCount === 1) {
+            if (isThumbOpen) detectedWord = "Ajoyib";
+            else detectedWord = "Bir";
+          } else if (fingerCount === 0) {
+            detectedWord = "Orqaga";
           }
         }
       }
       canvasCtx.restore();
 
-      // Update Debug Info
       setDebugData({ word: detectedWord, xDiff: 0, yDiff: 0 });
 
       if (detectedWord !== "Ishora kutilmoqda...") {
          if (lastGestureRef.current === detectedWord) {
              gestureCountRef.current += 1;
-             const requiredCount = (detectedWord === "Orqaga" || detectedWord === "Bir" || detectedWord === "Ikki") ? 6 : 12; 
+             const requiredCount = 5; 
              if (gestureCountRef.current === requiredCount) { 
                 setRecentWord(detectedWord);
                 
                 if (detectedWord === "Modullar") {
-                  if (view !== 'modules') navigateTo('modules');
+                  if (view === 'translator') navigateTo('modules');
+                  else if (view === 'modules') navigateTo('module5');
                 } else if (detectedWord === "Orqaga") {
                   goBack();
-                } else if (detectedWord === "Bir" && view === 'modules') {
-                  navigateTo('module1');
-                } else if (detectedWord === "Ikki" && view === 'modules') {
-                  navigateTo('module2');
+                } else if (view === 'modules') {
+                  if (detectedWord === "Bir") navigateTo('module1');
+                  else if (detectedWord === "Ikki") navigateTo('module2');
+                  else if (detectedWord === "Uch") navigateTo('module3');
+                  else if (detectedWord === "To'rt") navigateTo('module4');
                 }
 
                 if (view === 'translator') {
                   sentenceRef.current.push(detectedWord);
                   if (sentenceRef.current.length > 5) sentenceRef.current.shift();
-                  const currentRaw = [...sentenceRef.current];
-                  setRawWords(currentRaw);
-                  generateLogicalSentence(currentRaw);
+                  setRawWords([...sentenceRef.current]);
+                  generateLogicalSentence([...sentenceRef.current]);
                 }
              }
          } else {
@@ -246,25 +278,24 @@ const GestureInterface = ({ onSwitch }) => {
         return (
           <div className="modules-selection animate-fade-in" style={{ width: '100%' }}>
             <h2 className="panel-title">📚 O'quv Modullari</h2>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '30px' }}>
-              <button 
-                className="interface-card" 
-                style={{ background: 'rgba(58, 134, 255, 0.1)', border: '2px solid var(--primary)', height: '200px' }}
-                onClick={() => navigateTo('module1')}
-              >
-                <span style={{ fontSize: '3rem' }}>🤖</span>
-                <h3>1-Modul</h3>
-                <p>AI va STEAM</p>
-              </button>
-              <button 
-                className="interface-card" 
-                style={{ background: 'rgba(255, 186, 8, 0.1)', border: '2px solid #FFBA08', height: '200px' }}
-                onClick={() => navigateTo('module2')}
-              >
-                <span style={{ fontSize: '3rem' }}>⚙️</span>
-                <h3>2-Modul</h3>
-                <p>Robototexnika</p>
-              </button>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginTop: '30px' }}>
+              {Object.keys(modulesData).map(key => {
+                const mod = modulesData[key];
+                const colors = ['rgba(58, 134, 255, 0.1)', 'rgba(255, 186, 8, 0.1)', 'rgba(16, 185, 129, 0.1)', 'rgba(239, 68, 68, 0.1)', 'rgba(167, 139, 250, 0.1)'];
+                const borders = ['var(--primary)', '#FFBA08', '#10B981', '#EF4444', '#A78BFA'];
+                return (
+                  <button 
+                    key={key}
+                    className="interface-card" 
+                    style={{ background: colors[parseInt(key)-1], border: `2px solid ${borders[parseInt(key)-1]}`, height: '180px' }}
+                    onClick={() => navigateTo('module' + key)}
+                  >
+                    <span style={{ fontSize: '2.5rem' }}>{mod.icon}</span>
+                    <h3>{key}-Modul</h3>
+                    <p style={{fontSize: '0.8rem'}}>{mod.title.split(': ')[1]}</p>
+                  </button>
+                );
+              })}
             </div>
             <div style={{ marginTop: '40px', textAlign: 'center' }}>
                <button className="back-btn" onClick={goBack}>👈 Orqaga</button>
@@ -274,7 +305,10 @@ const GestureInterface = ({ onSwitch }) => {
 
       case 'module1':
       case 'module2':
-        const modId = view === 'module1' ? 1 : 2;
+      case 'module3':
+      case 'module4':
+      case 'module5':
+        const modId = parseInt(view.replace('module', ''));
         const currentMod = modulesData[modId];
         return (
           <div className="module-detail animate-fade-in" style={{ width: '100%' }}>
@@ -291,7 +325,19 @@ const GestureInterface = ({ onSwitch }) => {
                     <span style={{ fontSize: '0.8rem', color: 'var(--success)' }}>Tayyor ✅</span>
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
-                    <button className="btn-secondary" style={{ fontSize: '0.85rem', padding: '10px' }}>📺 Videodars</button>
+                    <button 
+                      className="btn-secondary" 
+                      style={{ fontSize: '0.85rem', padding: '10px' }}
+                      onClick={() => {
+                        if (theme.video) {
+                          setActiveVideo(theme.video);
+                        } else {
+                          alert("Ushbu dars uchun video darslik hozircha yuklanmagan.");
+                        }
+                      }}
+                    >
+                      📺 Videodars
+                    </button>
                     <button className="btn-secondary" style={{ fontSize: '0.85rem', padding: '10px' }}>📝 Testlar</button>
                     <button className="btn-secondary" style={{ fontSize: '0.85rem', padding: '10px' }}>📁 Topshiriqlar</button>
                   </div>
@@ -360,16 +406,19 @@ const GestureInterface = ({ onSwitch }) => {
       <div className="content-section" style={{ gridTemplateColumns: view === 'translator' ? '1.2fr 1fr' : '1fr' }}>
         <div className="main-panel" style={{ display: 'flex', flexDirection: 'column' }}>
           {view === 'translator' ? (
-            <div style={{ background: 'rgba(0,0,0,0.5)', padding: '20px', borderRadius: '16px', border: '1px solid rgba(108, 99, 255, 0.3)', display: 'flex', flexDirection: 'column', gap: '15px' }}>
-               <div style={{ background: 'rgba(108, 99, 255, 0.1)', padding: '15px', borderRadius: '10px', borderLeft: '4px solid #6C63FF' }}>
-                 <div style={{ fontSize: '0.85rem', color: '#6C63FF', fontWeight: 'bold', marginBottom: '8px' }}>
+            <div style={{ background: 'rgba(255, 255, 255, 0.07)', padding: '25px', borderRadius: '24px', border: '1px solid rgba(135, 126, 255, 0.4)', display: 'flex', flexDirection: 'column', gap: '20px', boxShadow: '0 10px 40px rgba(0,0,0,0.2)' }}>
+               <div style={{ background: 'rgba(108, 99, 255, 0.15)', padding: '20px', borderRadius: '15px', borderLeft: '5px solid #877eff' }}>
+                 <div style={{ fontSize: '0.9rem', color: '#a5a0ff', fontWeight: 'bold', marginBottom: '10px', letterSpacing: '0.5px' }}>
                     NLP MANTIQIY GAP TARJIMONI:
                  </div>
-                 <div style={{ color: '#fff', fontSize: '1.2rem', lineHeight: '1.5', minHeight: '30px' }}>
+                 <div style={{ color: '#fff', fontSize: '1.4rem', lineHeight: '1.5', minHeight: '40px', fontWeight: '500' }}>
                    {logicalSentence || "Tarjima uchun ishora qiling, yoki barcha barmoqlarni ochib \"Modullar\"ga o'ting..."}
                  </div>
                </div>
-               <button className="btn-primary" onClick={clearText} style={{ alignSelf: 'flex-start', background: 'var(--surface-color)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)' }}>Tozalash</button>
+               <div style={{ display: 'flex', gap: '10px' }}>
+                 <button className="btn-primary" onClick={clearText} style={{ flex: 1, background: 'var(--surface-color)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)' }}>Tozalash</button>
+                 <button className="btn-primary" onClick={() => navigateTo('modules')} style={{ flex: 2, background: 'var(--primary)', color: '#fff', border: 'none', fontWeight: 'bold' }}>📚 Modullarga o'tish</button>
+               </div>
             </div>
           ) : (
             renderView()
@@ -377,29 +426,57 @@ const GestureInterface = ({ onSwitch }) => {
         </div>
 
         {view === 'translator' && (
-          <div className="side-panel">
-            <h2 className="panel-title">👋 Ishoralar ro'yxati</h2>
-            <div className="course-list" style={{ gap: '8px' }}>
-              <div className="course-item">
+          <div className="side-panel" style={{ background: 'rgba(255, 255, 255, 0.05)', borderRadius: '24px', padding: '25px', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+            <h2 className="panel-title" style={{ marginBottom: '20px' }}>👋 Ishoralar ro'yxati</h2>
+            <div className="course-list" style={{ gap: '12px' }}>
+              <div className="course-item" style={{ background: 'rgba(255,255,255,0.08)', padding: '15px', borderRadius: '15px' }}>
                 <span>👋 <b style={{marginLeft: '10px'}}>Ochiq kaft</b> - Modullarni ochish</span>
               </div>
-              <div className="course-item">
+              <div className="course-item" style={{ background: 'rgba(255,255,255,0.08)', padding: '15px', borderRadius: '15px' }}>
                 <span>✊ <b style={{marginLeft: '10px'}}>Musht (Fist)</b> - Orqaga qaytish</span>
               </div>
-              <div className="course-item">
+              <div className="course-item" style={{ background: 'rgba(255,255,255,0.08)', padding: '15px', borderRadius: '15px' }}>
                 <span>☝️ <b style={{marginLeft: '10px'}}>Ko'rsatkich</b> - "Bir" so'zi / Tanlash</span>
               </div>
-              <div className="course-item">
+              <div className="course-item" style={{ background: 'rgba(255,255,255,0.08)', padding: '15px', borderRadius: '15px' }}>
                 <span>👍 <b style={{marginLeft: '10px'}}>Klass (Bosh barmoq)</b> - "Ajoyib"</span>
               </div>
             </div>
             
-            <div style={{ marginTop: '20px', padding: '15px', background: 'rgba(255,255,255,0.05)', borderRadius: '15px', fontSize: '0.8rem' }}>
+            <div style={{ marginTop: '25px', padding: '18px', background: 'rgba(56, 189, 248, 0.1)', border: '1px solid rgba(56, 189, 248, 0.2)', borderRadius: '15px', fontSize: '0.85rem', color: '#bae6fd' }}>
                <p><b>Eslatma:</b> Orqaga qaytish uchun qo'lingizdagi barcha barmoqlarni yopib musht qiling.</p>
             </div>
           </div>
         )}
       </div>
+
+      {/* Video Modal */}
+      {activeVideo && (
+        <div className="video-overlay" style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.95)', zIndex: 10000, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+          <button 
+            onClick={() => setActiveVideo(null)} 
+            style={{ position: 'absolute', top: '30px', left: '30px', padding: '12px 24px', background: 'rgba(255,255,255,0.1)', color: '#fff', borderRadius: '12px', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.2)', fontWeight: 'bold', zIndex: 10001, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            Chiqish
+          </button>
+          
+          <div style={{ width: '95vw', height: '90vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <video 
+              src={activeVideo} 
+              controls 
+              autoPlay 
+              style={{ 
+                maxWidth: '100%', 
+                maxHeight: '100%', 
+                borderRadius: '15px', 
+                boxShadow: '0 20px 80px rgba(0,0,0,0.8)',
+                objectFit: 'contain'
+              }}
+            ></video>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

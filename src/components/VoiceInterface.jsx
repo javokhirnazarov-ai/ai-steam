@@ -42,10 +42,27 @@ function pickBestVoice() {
 }
 
 function normalizeForSpeech(text = '') {
+  const ones = ['', 'bir', 'ikki', 'uch', 'to‘rt', 'besh', 'olti', 'yetti', 'sakkiz', 'to‘qqiz'];
+  const tens = ['', 'o‘n', 'yigirma', 'o‘ttiz', 'qirq', 'ellik', 'oltmish', 'yetmish', 'sakson', 'to‘qson'];
+
+  const convertNum = (n) => {
+    let num = parseInt(n);
+    if (isNaN(num)) return n;
+    if (num === 0) return 'nol';
+    if (num < 10) return ones[num];
+    if (num < 100) return (tens[Math.floor(num / 10)] + ' ' + ones[num % 10]).trim();
+    if (num === 100) return 'yuz';
+    return n;
+  };
+
   return text
     .replace(/AI/g, "sun'iy intellekt")
     .replace(/STEAM/g, "stiy-em")
-    .replace(/'/g, "’") // Help AI engines with Uzbek apostrophe
+    .replace(/(\d+)-modul/g, (m, p1) => convertNum(p1) + "inchi modul")
+    .replace(/(\d+)-dars/g, (m, p1) => convertNum(p1) + "inchi dars")
+    .replace(/(\d+)-bob/g, (m, p1) => convertNum(p1) + "inchi bob")
+    .replace(/\d+/g, (m) => convertNum(m))
+    .replace(/'/g, "’")
     .replace(/O'/g, "O‘")
     .replace(/G'/g, "G‘")
     .replace(/\s+/g, ' ')
@@ -88,68 +105,73 @@ function getSectionGreeting(sectionKey) {
     ],
     lab: [
       "Virtual laboratoriyaga xush kelibsiz. Bu yerda tajribalarni xavfsiz tarzda sinab ko‘rishingiz mumkin.",
-      "Ikkinchi bob ochildi. Endi laboratoriya usulida, lekin xavfsiz va qulay muhitda ishlaymiz.",
-      "Yaxshi, virtual laboratoriyaga o‘tdik. Keling, tajribalarni birma-bir ko‘rib chiqamiz."
+      "Zo‘r, topshiriqlar qismiga keldik. Keling, vazifalarni bajaramiz."
     ],
     task: [
       "Uchinchi bobga kirdik. Endi bilimingizni sinab ko‘rish vaqti keldi.",
-      "Zo‘r, topshiriqlar q/* ──────────────────────────────────────────────────────────────────────────
-   Section / Module config - 5 Modules, 10 Lessons each
+      "Zo‘r, topshiriqlar qismiga keldik. Keling, vazifalarni bajaramiz."
+    ]
+  };
+  return variants[sectionKey] || [];
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Section / Module config - 5 Modules
 ────────────────────────────────────────────────────────────────────────── */
 const MODULES = [
   { 
     id: 1, 
-    title: 'Kirish va STEAM asoslari', 
-    icon: '🚀',
+    title: 'Til va nutq markazi', 
+    icon: '🗣️',
     lessons: Array.from({ length: 10 }, (_, i) => ({
       id: i + 1,
-      title: `${i + 1}-dars: STEAM dunyosiga sayohat`,
-      content: `Ushbu 1-modulning ${i + 1}-darsida biz fan, texnologiya, muhandislik, san'at va matematika integratsiyasini o'rganamiz.`,
-      task: `1-modul ${i + 1}-dars bo'yicha topshiriq: STEAM tushunchasining har bir harfi nima anglatishini ovozli tarzda aytib bering.`
+      title: `${i + 1}-dars: Nutq madaniyati`,
+      content: `1-modul ${i + 1}-dars: Biz nutqimizni rivojlantiramiz va yangi so'zlarni o'rganamiz.`,
+      task: `O'zingiz haqingizda 3 ta gap aytib bering.`
     }))
   },
   { 
     id: 2, 
-    title: 'Sun’iy intellekt va Kelajak', 
-    icon: '🧠',
+    title: 'Qurish-yasash va matematika markazi', 
+    icon: '📐',
     lessons: Array.from({ length: 10 }, (_, i) => ({
       id: i + 1,
-      title: `${i + 1}-dars: AI qanday fikrlaydi?`,
-      content: `2-modul ${i + 1}-dars: Sun'iy intellekt ma'lumotlarni qanday tahlil qilishi va qaror qabul qilishi haqida suhbatlashamiz.`,
-      task: `Sun'iy intellekt kundalik hayotimizda qanday yordam berishi mumkinligiga 2 ta misol keltiring.`
+      title: `${i + 1}-dars: Shakllar va sanoq`,
+      content: `2-modul ${i + 1}-dars: Matematik tushunchalar va shakllarni o'rganamiz.`,
+      task: `Birdan o'ngacha sanab bering.`
     }))
   },
   { 
     id: 3, 
-    title: 'Robototexnika va Mexanika', 
-    icon: '🤖',
+    title: 'San’at markazi', 
+    icon: '🎨',
     lessons: Array.from({ length: 10 }, (_, i) => ({
       id: i + 1,
-      title: `${i + 1}-dars: Robotlar anatomiyasi`,
-      content: `3-modul ${i + 1}-dars: Robotlarning harakatlanishi uchun zarur bo'lgan datchiklar va motorlar haqida ma'lumot.`,
-      task: `Bitta robot turini va uning asosiy funksiyasini ayting.`
+      title: `${i + 1}-dars: Ranglar olami`,
+      content: `3-modul ${i + 1}-dars: Chizish va ijodkorlik sirlari.`,
+      task: `Sevimli rangingizni ayting.`
     }))
   },
   { 
     id: 4, 
-    title: 'Dasturlash sirlari', 
-    icon: '💻',
+    title: 'Syujetli-rolli o‘yinlar markazi', 
+    icon: '🎭',
     lessons: Array.from({ length: 10 }, (_, i) => ({
       id: i + 1,
-      title: `${i + 1}-dars: Algoritmlar nima?`,
-      content: `4-modul ${i + 1}-dars: Murakkab muammolarni oddiy qadamlarga bo'lish san'atini o'rganamiz.`,
-      task: `Choy damlash algoritmini qadam-baqadam sanab bering.`
+      title: `${i + 1}-dars: Sahna va rollar`,
+      content: `4-modul ${i + 1}-dars: Dramatizatsiya va muloqotni o'rganamiz.`,
+      task: `Biron bir ertak qahramonining ismini ayting.`
     }))
   },
   { 
     id: 5, 
-    title: 'Innovatsiyalar va Ijodkorlik', 
-    icon: '✨',
+    title: 'Ilm-fan va tabiat markazi', 
+    icon: '🔬',
     lessons: Array.from({ length: 10 }, (_, i) => ({
       id: i + 1,
-      title: `${i + 1}-dars: Creative Thinking`,
-      content: `5-modul ${i + 1}-dars: Yangi g'oyalarni qanday generatsiya qilish va ularni amalga oshirish usullari.`,
-      task: `Dunyoni o'zgartira oladigan bitta yangi g'oyangizni bayon qiling.`
+      title: `${i + 1}-dars: Tabiat sirlari`,
+      content: `5-modul ${i + 1}-dars: Atrof-muhit va tabiatdagi o'zgarishlar.`,
+      task: `Hozir qaysi fasl ekanligini ayting.`
     }))
   }
 ];
@@ -200,7 +222,8 @@ export default function VoiceInterface({ onSwitch }) {
     setSelectedLesson(null);
     setView('module');
     setTranscript('');
-    say(`${mod.id}-modul tanlandi: ${mod.title}. Ushbu modulda 10 ta dars mavjud. Qaysi darsni boshlaymiz?`);
+    const lessonsText = mod.lessons.map(l => l.title).join(', ');
+    say(`${mod.id}-modul: ${mod.title}. Darslar ro'yxati: ${lessonsText}. Qaysi birini boshlaymiz?`);
   }, [say]);
 
   const goLesson = useCallback((less) => {
@@ -233,17 +256,12 @@ export default function VoiceInterface({ onSwitch }) {
 
     // Hub View Commands
     if (viewRef.current === 'hub') {
-      const matchMod = norm.match(/(?:modul|bo'lim|bob)\s*([1-5]|bir|ikki|uch|to'rt|besh)/);
-      const modMap = { 'bir': 1, 'ikki': 2, 'uch': 3, 'to\'rt': 4, 'besh': 5 };
-      let modId = matchMod ? (modMap[matchMod[1]] || parseInt(matchMod[1])) : null;
-      
-      if (!modId) {
-        if (norm.includes('bir')) modId = 1;
-        else if (norm.includes('ikki')) modId = 2;
-        else if (norm.includes('uch')) modId = 3;
-        else if (norm.includes('to\'rt')) modId = 4;
-        else if (norm.includes('besh')) modId = 5;
-      }
+      let modId = null;
+      if (norm.includes('bir') || norm.includes('1')) modId = 1;
+      else if (norm.includes('ikki') || norm.includes('2')) modId = 2;
+      else if (norm.includes('uch') || norm.includes('3')) modId = 3;
+      else if (norm.includes('to\'rt') || norm.includes('tort') || norm.includes('4')) modId = 4;
+      else if (norm.includes('besh') || norm.includes('5')) modId = 5;
 
       if (modId && MODULES[modId - 1]) {
         cooldownRef.current = now;
@@ -289,6 +307,11 @@ export default function VoiceInterface({ onSwitch }) {
 
   }, [goHub, goModule, goLesson, selectedModule, selectedLesson, onSwitch, say]);
 
+  const processCmdRef = useRef(processCmd);
+  useEffect(() => {
+    processCmdRef.current = processCmd;
+  }, [processCmd]);
+
   // Recognition setup
   useEffect(() => {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -307,7 +330,11 @@ export default function VoiceInterface({ onSwitch }) {
 
     rec.onstart = () => setListening(true);
     rec.onerror = (e) => {
-        if (e.error === 'no-speech') return; // Ignore silent periods
+        if (e.error === 'no-speech') return;
+        setListening(false);
+        if (e.error === 'not-allowed') {
+            setErrMsg("Mikrofon o'chiq. Brauzerda ruxsat berib, 'Yoqish'ni bosing.");
+        }
         console.error('SR Error:', e.error);
     };
     rec.onend = () => {
@@ -324,22 +351,24 @@ export default function VoiceInterface({ onSwitch }) {
       }
       if (finalStr) {
         setTranscript(finalStr);
-        processCmd(finalStr);
+        processCmdRef.current(finalStr);
       }
     };
 
-    try { rec.start(); } catch(_) {}
+    setTimeout(() => {
+      try { rec.start(); } catch(e) { console.error("Auto-start failed:", e); }
+    }, 500);
 
+    return () => {
+      try { rec.stop(); } catch(_) {}
+    };
+  }, []);
+
+  useEffect(() => {
     setTimeout(() => {
       say("Inclusive STEAM portaliga xush kelibsiz. 5 ta moduldan birini tanlang.");
     }, 1000);
-
-    return () => {
-      mountedRef.current = false;
-      try { rec.stop(); } catch(_) {}
-      window.speechSynthesis.cancel();
-    };
-  }, [processCmd, say]);
+  }, [say]);
 
   /* ──────────────────────────────────────────────────────────────────────────
      Views
@@ -434,8 +463,23 @@ export default function VoiceInterface({ onSwitch }) {
         <div>
           <h1 className="title text-gradient">Inclusive STEAM</h1>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div className={`pulse-dot ${listening ? 'active' : ''}`} style={{ width: 10, height: 10, borderRadius: '50%', background: listening ? 'var(--success)' : '#555' }}></div>
-            <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>{listening ? 'Sizni eshityapman' : 'Mikrofon kutmoqda'}</span>
+            <button 
+              onClick={async () => {
+                setErrMsg("");
+                try {
+                  await navigator.mediaDevices.getUserMedia({ audio: true });
+                  recRef.current?.start();
+                } catch(e) {
+                  setErrMsg("Brauzer mikrofonga ruxsat bermadi. Iltimos, manzil satridagi 'Qulf' (🔒) belgisini bosing va ruxsat bering.");
+                }
+              }}
+              className={`pulse-dot ${listening ? 'active' : ''}`} 
+              style={{ padding: 0, width: 14, height: 14, borderRadius: '50%', background: listening ? 'var(--success)' : 'var(--error)', cursor: 'pointer', border: 'none', boxShadow: listening ? '0 0 15px var(--success)' : 'none' }}
+              title={listening ? "Eshityapman" : "Mikrofonni yoqish uchun bosing"}
+            ></button>
+            <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontWeight: listening ? '600' : '400' }}>
+              {listening ? 'Sizni eshityapman...' : 'Mikrofon o\'chiq (Yoqish uchun bosing)'}
+            </span>
           </div>
         </div>
 
@@ -463,4 +507,3 @@ export default function VoiceInterface({ onSwitch }) {
     </div>
   );
 }
-

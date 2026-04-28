@@ -107,7 +107,7 @@ const SmartOnboarding = ({ onComplete }) => {
   };
 
   return (
-    <div className="onboarding-container" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #00c6ff 0%, #0072ff 100%)', color: '#fff' }}>
+    <div className="onboarding-container" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #061730 0%, #1c3d5e 100%)', color: '#fff' }}>
       <div style={{ maxWidth: '800px', width: '90%', background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', padding: '60px 40px', borderRadius: '40px', border: '1px solid rgba(255,255,255,0.3)', boxShadow: '0 15px 35px rgba(0,0,0,0.2)', textAlign: 'center' }}>
         
         {step === STEPS.INTRO && (
@@ -132,7 +132,15 @@ const SmartOnboarding = ({ onComplete }) => {
                 </div>
               )}
             </div>
-            <button onClick={startOnboarding} style={{ background: '#fff', color: '#0072ff', border: 'none', padding: '18px 60px', borderRadius: '20px', fontSize: '1.2rem', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px', margin: '0 auto', boxShadow: '0 10px 30px rgba(0, 114, 255, 0.3)', transition: 'transform 0.3s' }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
+            <button 
+              onClick={async () => {
+                try { await navigator.mediaDevices.getUserMedia({ audio: true }); } catch(e) {}
+                startOnboarding();
+              }} 
+              style={{ background: '#fff', color: '#0072ff', border: 'none', padding: '18px 60px', borderRadius: '20px', fontSize: '1.2rem', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px', margin: '0 auto', boxShadow: '0 10px 30px rgba(0, 114, 255, 0.3)', transition: 'transform 0.3s' }} 
+              onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'} 
+              onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+            >
                Boshlash 
                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14m-7-7 7 7-7 7"/></svg>
             </button>
