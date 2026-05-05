@@ -123,12 +123,28 @@ const MODULES = [
     id: 1, 
     title: 'Til va nutq markazi', 
     icon: '🗣️',
-    lessons: Array.from({ length: 10 }, (_, i) => ({
-      id: i + 1,
-      title: `${i + 1}-dars: Nutq madaniyati`,
-      content: `1-modul ${i + 1}-dars: Biz nutqimizni rivojlantiramiz va yangi so'zlarni o'rganamiz.`,
-      task: `O'zingiz haqingizda 3 ta gap aytib bering.`
-    }))
+    lessons: [
+      { 
+        id: 1, 
+        title: '1-dars: Nutq madaniyati', 
+        content: "1-modul 1-dars: Biz nutqimizni rivojlantiramiz va yangi so'zlarni o'rganamiz.", 
+        task: "O'zingiz haqingizda 3 ta gap aytib bering.",
+        video: '/videodarslar/1.1.mp4'
+      },
+      { 
+        id: 2, 
+        title: '2-dars: Lug‘at boyligini oshirish', 
+        content: "1-modul 2-dars: Lug'at boyligimizni oshiramiz.", 
+        task: "Yangi o'rgangan so'zlaringizdan foydalanib gap tuzing.",
+        video: '/videodarslar/1.2.mp4'
+      },
+      ...Array.from({ length: 8 }, (_, i) => ({
+        id: i + 3,
+        title: `${i + 3}-dars: Nutq madaniyati`,
+        content: `1-modul ${i + 3}-dars: Biz nutqimizni rivojlantiramiz va yangi so'zlarni o'rganamiz.`,
+        task: `O'zingiz haqingizda 3 ta gap aytib bering.`
+      }))
+    ]
   },
   { 
     id: 2, 
@@ -183,7 +199,7 @@ export default function VoiceInterface({ onSwitch }) {
   const [view, setView] = useState('hub'); // hub, module, lesson
   const [selectedModule, setSelectedModule] = useState(null);
   const [selectedLesson, setSelectedLesson] = useState(null);
-  const [activeTab, setActiveTab] = useState('audio'); // audio, tasks
+  const [activeTab, setActiveTab] = useState('audio'); // audio, tasks, video
   
   const [transcript, setTranscript] = useState('');
   const [listening, setListening] = useState(false);
@@ -229,9 +245,14 @@ export default function VoiceInterface({ onSwitch }) {
   const goLesson = useCallback((less) => {
     setSelectedLesson(less);
     setView('lesson');
-    setActiveTab('audio');
     setTranscript('');
-    say(`${less.title}. Hozir ovozli dars qismidamiz. Topshiriqlarni ko'rish uchun "topshiriq" deb ayting.`);
+    if (less.video) {
+      setActiveTab('video');
+      say(`${less.title}. Videodars yuklanmoqda.`);
+    } else {
+      setActiveTab('audio');
+      say(`${less.title}. Hozir ovozli dars qismidamiz. Topshiriqlarni ko'rish uchun "topshiriq" deb ayting.`);
+    }
   }, [say]);
 
   const processCmd = useCallback((raw) => {
@@ -302,6 +323,16 @@ export default function VoiceInterface({ onSwitch }) {
         setActiveTab('tasks');
         say("Ushbu dars bo'yicha topshiriq: " + selectedLesson.task);
         return;
+      }
+      if (norm.includes('video') || norm.includes('ko\'rish') || norm.includes('ekran')) {
+        if (selectedLesson.video) {
+          cooldownRef.current = now;
+          setActiveTab('video');
+          say("Videodars yuklanmoqda.");
+          return;
+        } else {
+          say("Ushbu dars uchun video darslik mavjud emas.");
+        }
       }
     }
 
@@ -432,10 +463,18 @@ export default function VoiceInterface({ onSwitch }) {
          >
            📝 Topshiriqlar
          </button>
+         {selectedLesson.video && (
+           <button 
+             onClick={() => setActiveTab('video')} 
+             style={{ flex: 1, padding: '20px', borderRadius: '18px', background: activeTab === 'video' ? 'rgba(56, 189, 248, 0.2)' : 'var(--bg-card)', border: activeTab === 'video' ? '1px solid var(--text-accent)' : '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: '1.1rem', fontWeight: 'bold' }}
+           >
+             📺 Videodars
+           </button>
+         )}
       </div>
 
       <div className="glass-panel" style={{ padding: '40px', minHeight: '300px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
-         {activeTab === 'audio' ? (
+         {activeTab === 'audio' && (
            <div className="animate-fade-in">
               <div className="voice-wave" style={{ marginBottom: '30px' }}>
                 {[...Array(12)].map((_, i) => <div key={i} className="bar" style={{ animationDelay: `${i * 0.1}s`, width: '6px', margin: '0 3px' }}></div>)}
@@ -443,7 +482,9 @@ export default function VoiceInterface({ onSwitch }) {
               <p style={{ fontSize: '1.4rem', lineHeight: '1.8', maxWidth: '700px' }}>{selectedLesson.content}</p>
               <button onClick={() => say(selectedLesson.content)} style={{ marginTop: '30px', color: 'var(--text-accent)', textDecoration: 'underline' }}>Qayta eshitish</button>
            </div>
-         ) : (
+         )}
+         
+         {activeTab === 'tasks' && (
            <div className="animate-fade-in">
               <div style={{ fontSize: '4rem', marginBottom: '20px' }}>🎯</div>
               <h3 style={{ fontSize: '1.6rem', marginBottom: '20px' }}>Topshiriq:</h3>
@@ -451,6 +492,17 @@ export default function VoiceInterface({ onSwitch }) {
               <div style={{ padding: '15px 30px', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid var(--success)', borderRadius: '15px', color: 'var(--success)', fontWeight: '500' }}>
                  Javobingizni hozir ovozli bering...
               </div>
+           </div>
+         )}
+
+         {activeTab === 'video' && selectedLesson.video && (
+           <div className="animate-fade-in" style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <video 
+                src={selectedLesson.video} 
+                controls 
+                autoPlay 
+                style={{ width: '100%', borderRadius: '15px', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}
+              ></video>
            </div>
          )}
       </div>
