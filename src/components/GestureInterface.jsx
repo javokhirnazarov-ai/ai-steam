@@ -43,7 +43,7 @@ const GestureInterface = ({ onSwitch }) => {
       icon: "🗣️",
       themes: [
         { id: "1.1", name: "Nutqning tovush madaniyati", video: "/videodarslar/1.1.mp4" },
-        { id: "1.2", name: "Lug‘at boyligini oshirish" },
+        { id: "1.2", name: "Lug‘at boyligini oshirish", video: "/videodarslar/1.2.mp4" },
         { id: "1.3", name: "Nutqning grammatik qurilishi" },
         { id: "1.4", name: "Bog‘lanishli nutqni rivojlantirish" },
         { id: "1.5", name: "O‘qishga tayyorgarlik" }
