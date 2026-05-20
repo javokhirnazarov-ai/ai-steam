@@ -39,7 +39,7 @@ const GestureInterface = ({ onSwitch }) => {
 
   const modulesData = {
     1: {
-      title: "1-Modul: Til va nutq markazi",
+      title: "1-Modul: Til va nutq markazi!!!",
       icon: "🗣️",
       themes: [
         { id: "1.1", name: "O harfi", video: "/videodarslar/1.1.i.mp4" },
