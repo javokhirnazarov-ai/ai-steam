@@ -244,17 +244,20 @@ export default function VoiceInterface({ onSwitch }) {
     setSelectedLesson(less);
     setView('lesson');
     setTranscript('');
+    const lessonName = less.title.replace(/^[0-9]+-dars:\s*/i, '');
     if (less.video) {
       setActiveTab('video');
-      say(`${less.title}. Videodars yuklanmoqda.`);
+      say(`${less.id}-dars ochildi. ${lessonName}. Videodars yuklanmoqda.`);
     } else {
       setActiveTab('audio');
-      say(`${less.title}. Hozir ovozli dars qismidamiz. Topshiriqlarni ko'rish uchun "topshiriq" deb ayting.`);
+      say(`${less.id}-dars ochildi. ${lessonName}. Hozir ovozli dars qismidamiz. Topshiriqlarni ko'rish uchun "topshiriq" deb ayting.`);
     }
   }, [say]);
 
   const activeTabRef = useRef(activeTab);
   useEffect(() => { activeTabRef.current = activeTab; }, [activeTab]);
+
+  const lastProcessedRef = useRef({ norm: '', time: 0 });
 
   const processCmd = useCallback((raw) => {
     const now = Date.now();
@@ -263,9 +266,33 @@ export default function VoiceInterface({ onSwitch }) {
     const cmd = (raw || '').toLowerCase().trim();
     if (!cmd) return;
 
+    const norm = cmd.toLowerCase();
+    if (lastProcessedRef.current.norm === norm && now - lastProcessedRef.current.time < 2500) {
+      return;
+    }
+
     console.log('[Voice] CMD:', cmd);
     setLastHeard(cmd);
-    const norm = cmd.toLowerCase();
+
+    // Ignore lesson commands while a video is actively playing, but still allow back navigation
+    if (viewRef.current === 'lesson' && activeTabRef.current === 'video') {
+      if (norm.includes('orqaga') || norm.includes('menyu') || norm.includes('qayt')) {
+        cooldownRef.current = now;
+        lastProcessedRef.current = { norm, time: now };
+        goModule(selectedModule);
+      }
+      return;
+    }
+
+    // Global Commands
+    if (norm.includes('orqaga') || norm.includes('menyu') || norm.includes('qayt')) {
+      cooldownRef.current = now;
+      lastProcessedRef.current = { norm, time: now };
+      if (viewRef.current === 'lesson') goModule(selectedModule);
+      else if (viewRef.current === 'module') goHub();
+      else onSwitch?.('onboarding');
+      return;
+    }
 
     // Ignore lesson commands while a video is actively playing, but still allow back navigation
     if (viewRef.current === 'lesson' && activeTabRef.current === 'video') {
@@ -279,6 +306,7 @@ export default function VoiceInterface({ onSwitch }) {
     // Global Commands
     if (norm.includes('orqaga') || norm.includes('menyu') || norm.includes('qayt')) {
       cooldownRef.current = now;
+      lastProcessedRef.current = { norm, time: now };
       if (viewRef.current === 'lesson') goModule(selectedModule);
       else if (viewRef.current === 'module') goHub();
       else onSwitch?.('onboarding');
@@ -294,6 +322,7 @@ export default function VoiceInterface({ onSwitch }) {
 
       if (modId && MODULES[modId - 1]) {
         cooldownRef.current = now;
+        lastProcessedRef.current = { norm, time: now };
         goModule(MODULES[modId - 1]);
         return;
       }
@@ -313,6 +342,7 @@ export default function VoiceInterface({ onSwitch }) {
 
       if (lessId && selectedModule.lessons[lessId - 1]) {
         cooldownRef.current = now;
+        lastProcessedRef.current = { norm, time: now };
         goLesson(selectedModule.lessons[lessId - 1]);
         return;
       }
@@ -322,12 +352,14 @@ export default function VoiceInterface({ onSwitch }) {
     if (viewRef.current === 'lesson') {
       if (norm.includes('ovoz') || norm.includes('dars') || norm.includes('eshit')) {
         cooldownRef.current = now;
+        lastProcessedRef.current = { norm, time: now };
         setActiveTab('audio');
         say(selectedLesson.content);
         return;
       }
       if (norm.includes('topshiriq') || norm.includes('vazifa') || norm.includes('ish')) {
         cooldownRef.current = now;
+        lastProcessedRef.current = { norm, time: now };
         setActiveTab('tasks');
         say("Ushbu dars bo'yicha topshiriq: " + selectedLesson.task);
         return;
@@ -335,6 +367,7 @@ export default function VoiceInterface({ onSwitch }) {
       if (norm.includes('video') || norm.includes('ko\'rish') || norm.includes('ekran')) {
         if (selectedLesson.video) {
           cooldownRef.current = now;
+          lastProcessedRef.current = { norm, time: now };
           setActiveTab('video');
           say("Videodars yuklanmoqda.");
           return;
