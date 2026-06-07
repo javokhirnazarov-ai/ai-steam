@@ -166,26 +166,29 @@ const GestureInterface = ({ onSwitch }) => {
             window.drawLandmarks(canvasCtx, landmarks, { color: '#FF0000', lineWidth: 1, radius: 3 });
           }
 
-          const isThumbOpen = landmarks[4].y < landmarks[3].y - 0.01;
+          const isThumbOpen = landmarks[4].x < landmarks[3].x - 0.02 || landmarks[4].x > landmarks[3].x + 0.02;
           const isIndexOpen = landmarks[8].y < landmarks[6].y;
           const isMiddleOpen = landmarks[12].y < landmarks[10].y;
           const isRingOpen = landmarks[16].y < landmarks[14].y;
           const isPinkyOpen = landmarks[20].y < landmarks[18].y;
 
-          const fingerCount = [isIndexOpen, isMiddleOpen, isRingOpen, isPinkyOpen, isThumbOpen].filter(Boolean).length;
+          const primaryFingerCount = [isIndexOpen, isMiddleOpen, isRingOpen, isPinkyOpen].filter(Boolean).length;
+          const totalFingerCount = [isIndexOpen, isMiddleOpen, isRingOpen, isPinkyOpen, isThumbOpen].filter(Boolean).length;
+          const onlyThumbOpen = isThumbOpen && primaryFingerCount === 0;
 
-          if (fingerCount === 5) {
+          if (totalFingerCount === 5) {
             detectedWord = "Modullar";
-          } else if (fingerCount === 4) {
+          } else if (primaryFingerCount === 4) {
             detectedWord = "To'rt";
-          } else if (fingerCount === 3) {
+          } else if (primaryFingerCount === 3) {
             detectedWord = "Uch";
-          } else if (fingerCount === 2) {
+          } else if (primaryFingerCount === 2) {
             detectedWord = "Ikki";
-          } else if (fingerCount === 1) {
-            if (isThumbOpen) detectedWord = "Ajoyib";
-            else detectedWord = "Bir";
-          } else if (fingerCount === 0) {
+          } else if (primaryFingerCount === 1) {
+            detectedWord = "Bir";
+          } else if (onlyThumbOpen) {
+            detectedWord = "Ajoyib";
+          } else if (totalFingerCount === 0) {
             detectedWord = "Orqaga";
           }
         }
