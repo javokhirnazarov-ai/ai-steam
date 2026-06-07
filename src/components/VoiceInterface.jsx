@@ -223,8 +223,7 @@ export default function VoiceInterface({ onSwitch }) {
     setSelectedModule(null);
     setSelectedLesson(null);
     setTranscript('');
-    say("Asosiy portalga qaytdik. Qaysi modulni o'rganishni xohlaysiz?");
-  }, [say]);
+  }, []);
 
   const goModule = useCallback((mod) => {
     if (welcomeAudioRef.current) {
@@ -254,6 +253,9 @@ export default function VoiceInterface({ onSwitch }) {
     }
   }, [say]);
 
+  const activeTabRef = useRef(activeTab);
+  useEffect(() => { activeTabRef.current = activeTab; }, [activeTab]);
+
   const processCmd = useCallback((raw) => {
     const now = Date.now();
     if (now - cooldownRef.current < 800) return;
@@ -264,6 +266,15 @@ export default function VoiceInterface({ onSwitch }) {
     console.log('[Voice] CMD:', cmd);
     setLastHeard(cmd);
     const norm = cmd.toLowerCase();
+
+    // Ignore lesson commands while a video is actively playing, but still allow back navigation
+    if (viewRef.current === 'lesson' && activeTabRef.current === 'video') {
+      if (norm.includes('orqaga') || norm.includes('menyu') || norm.includes('qayt')) {
+        cooldownRef.current = now;
+        goModule(selectedModule);
+      }
+      return;
+    }
 
     // Global Commands
     if (norm.includes('orqaga') || norm.includes('menyu') || norm.includes('qayt')) {
