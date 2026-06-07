@@ -260,7 +260,7 @@ export default function VoiceInterface({ onSwitch }) {
     const lessonName = less.title.replace(/^[0-9]+-dars:\s*/i, '');
     if (less.video) {
       setActiveTab('video');
-      say(`${less.id}-dars ochildi. ${lessonName}. Videodars yuklanmoqda.`);
+      // Do not use long TTS before a video lesson so video audio can play cleanly.
     } else {
       setActiveTab('audio');
       say(`${less.id}-dars ochildi. ${lessonName}. Hozir ovozli dars qismidamiz. Topshiriqlarni ko'rish uchun "topshiriq" deb ayting.`);
@@ -447,6 +447,15 @@ export default function VoiceInterface({ onSwitch }) {
       try { rec.stop(); } catch (_) { }
     };
   }, []);
+
+  useEffect(() => {
+    if (!mountedRef.current || !recRef.current || listening) return;
+    try {
+      recRef.current.start();
+    } catch (e) {
+      console.warn('Voice recognition restart failed:', e);
+    }
+  }, [view, activeTab, listening]);
 
   useEffect(() => {
     if (view === 'hub') {
