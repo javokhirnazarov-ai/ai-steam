@@ -166,7 +166,7 @@ const GestureInterface = ({ onSwitch }) => {
             window.drawLandmarks(canvasCtx, landmarks, { color: '#FF0000', lineWidth: 1, radius: 3 });
           }
 
-          const isThumbOpen = landmarks[4].x < landmarks[3].x - 0.02 || landmarks[4].x > landmarks[3].x + 0.02;
+          const isThumbOpen = Math.abs(landmarks[4].x - landmarks[3].x) > 0.02;
           const isIndexOpen = landmarks[8].y < landmarks[6].y;
           const isMiddleOpen = landmarks[12].y < landmarks[10].y;
           const isRingOpen = landmarks[16].y < landmarks[14].y;
@@ -174,10 +174,14 @@ const GestureInterface = ({ onSwitch }) => {
 
           const primaryFingerCount = [isIndexOpen, isMiddleOpen, isRingOpen, isPinkyOpen].filter(Boolean).length;
           const totalFingerCount = [isIndexOpen, isMiddleOpen, isRingOpen, isPinkyOpen, isThumbOpen].filter(Boolean).length;
-          const onlyThumbOpen = isThumbOpen && primaryFingerCount === 0;
+          const onlyThumbOpen = isThumbOpen && primaryFingerCount === 0 && totalFingerCount === 1;
 
-          if (totalFingerCount === 5) {
-            detectedWord = "Modullar";
+          if (totalFingerCount === 0) {
+            detectedWord = "Orqaga";
+          } else if (onlyThumbOpen) {
+            detectedWord = "Ajoyib";
+          } else if (totalFingerCount === 5) {
+            detectedWord = "Besh";
           } else if (primaryFingerCount === 4) {
             detectedWord = "To'rt";
           } else if (primaryFingerCount === 3) {
@@ -186,10 +190,6 @@ const GestureInterface = ({ onSwitch }) => {
             detectedWord = "Ikki";
           } else if (primaryFingerCount === 1) {
             detectedWord = "Bir";
-          } else if (onlyThumbOpen) {
-            detectedWord = "Ajoyib";
-          } else if (totalFingerCount === 0) {
-            detectedWord = "Orqaga";
           }
         }
       }
@@ -204,15 +204,29 @@ const GestureInterface = ({ onSwitch }) => {
           if (gestureCountRef.current === requiredCount) {
             setRecentWord(detectedWord);
 
-            if (detectedWord === "Modullar") {
-              if (view === 'translator') navigateTo('modules');
-              else if (view === 'modules') navigateTo('module3');
+            const gestureNumber = detectedWord === "Bir" ? 1
+              : detectedWord === "Ikki" ? 2
+              : detectedWord === "Uch" ? 3
+              : detectedWord === "To'rt" ? 4
+              : detectedWord === "Besh" ? 5
+              : null;
+
+            if (detectedWord === "Besh" && view === 'translator') {
+              navigateTo('modules');
             } else if (detectedWord === "Orqaga") {
               goBack();
-            } else if (view === 'modules') {
-              if (detectedWord === "Bir") navigateTo('module1');
-              else if (detectedWord === "Ikki") navigateTo('module2');
-              else if (detectedWord === "Uch") navigateTo('module3');
+            } else if (view === 'modules' && gestureNumber >= 1 && gestureNumber <= 3) {
+              navigateTo('module' + gestureNumber);
+            } else if (view.startsWith('module') && gestureNumber >= 1 && gestureNumber <= 5) {
+              const moduleIndex = parseInt(view.replace('module', ''), 10);
+              const selectedTheme = modulesData[moduleIndex]?.themes[gestureNumber - 1];
+              if (selectedTheme) {
+                if (selectedTheme.video) {
+                  setActiveVideo(selectedTheme.video);
+                } else {
+                  alert("Ushbu dars uchun video darslik hozircha yuklanmagan.");
+                }
+              }
             }
 
             if (view === 'translator') {
@@ -424,7 +438,19 @@ const GestureInterface = ({ onSwitch }) => {
                 <span>✊ <b style={{ marginLeft: '10px' }}>Musht (Fist)</b> - Orqaga qaytish</span>
               </div>
               <div className="course-item" style={{ background: 'rgba(255,255,255,0.08)', padding: '15px', borderRadius: '15px' }}>
-                <span>☝️ <b style={{ marginLeft: '10px' }}>Ko'rsatkich</b> - "Bir" so'zi / Tanlash</span>
+                <span>☝️ <b style={{ marginLeft: '10px' }}>Ko'rsatkich</b> - "Bir" so'zi / 1-dars</span>
+              </div>
+              <div className="course-item" style={{ background: 'rgba(255,255,255,0.08)', padding: '15px', borderRadius: '15px' }}>
+                <span>2️⃣ <b style={{ marginLeft: '10px' }}>Ikki barmoq</b> - 2-dars</span>
+              </div>
+              <div className="course-item" style={{ background: 'rgba(255,255,255,0.08)', padding: '15px', borderRadius: '15px' }}>
+                <span>3️⃣ <b style={{ marginLeft: '10px' }}>Uch barmoq</b> - 3-dars</span>
+              </div>
+              <div className="course-item" style={{ background: 'rgba(255,255,255,0.08)', padding: '15px', borderRadius: '15px' }}>
+                <span>4️⃣ <b style={{ marginLeft: '10px' }}>To'rt barmoq</b> - 4-dars</span>
+              </div>
+              <div className="course-item" style={{ background: 'rgba(255,255,255,0.08)', padding: '15px', borderRadius: '15px' }}>
+                <span>5️⃣ <b style={{ marginLeft: '10px' }}>Besh barmoq</b> - 5-dars</span>
               </div>
               <div className="course-item" style={{ background: 'rgba(255,255,255,0.08)', padding: '15px', borderRadius: '15px' }}>
                 <span>👍 <b style={{ marginLeft: '10px' }}>Klass (Bosh barmoq)</b> - "Ajoyib"</span>
