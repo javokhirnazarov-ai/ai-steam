@@ -250,7 +250,11 @@ export default function VoiceInterface({ onSwitch }) {
     setView('module');
     setTranscript('');
     setActiveTab('audio');
-    say(`${mod.id}-modul: ${mod.title}. Endi bir darsni tanlang. Masalan, birinchi dars, ikkinchi dars yoki uchinchi dars.`);
+    if (mod.id === 1) {
+      say(`1-modul: Nutq. Bu modulda hozir faqat birinchi dars mavjud. Birinchi darsni boshlash uchun "dars" deb ayting.`);
+    } else {
+      say(`${mod.id}-modul: ${mod.title}. Endi bir darsni tanlang. Masalan, birinchi dars, ikkinchi dars yoki uchinchi dars.`);
+    }
   }, [say]);
 
   const goLesson = useCallback((less) => {
@@ -529,7 +533,7 @@ export default function VoiceInterface({ onSwitch }) {
       </div>
 
       <div className="course-list" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-        {selectedModule.lessons.map(l => (
+        {(selectedModule.id === 1 ? selectedModule.lessons.slice(0, 1) : selectedModule.lessons).map(l => (
           <div key={l.id} onClick={() => goLesson(l)} className="course-item" style={{ padding: '20px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
               <div style={{ padding: '10px 15px', background: 'rgba(56, 189, 248, 0.1)', color: 'var(--text-accent)', borderRadius: '12px', fontWeight: 'bold' }}>{l.id}</div>
