@@ -211,6 +211,7 @@ export default function VoiceInterface({ onSwitch }) {
   const mountedRef = useRef(true);
   const welcomeAudioRef = useRef(null);
   const speakingRef = useRef(false);
+  const shouldAutoRestartRef = useRef(true);
 
   useEffect(() => {
     viewRef.current = view;
@@ -237,6 +238,7 @@ export default function VoiceInterface({ onSwitch }) {
     setSelectedModule(null);
     setSelectedLesson(null);
     setTranscript('');
+    setActiveTab('audio');
   }, []);
 
   const goModule = useCallback((mod) => {
@@ -247,6 +249,7 @@ export default function VoiceInterface({ onSwitch }) {
     setSelectedLesson(null);
     setView('module');
     setTranscript('');
+    setActiveTab('audio');
     say(`${mod.id}-modul: ${mod.title}. Endi bir darsni tanlang. Masalan, birinchi dars, ikkinchi dars yoki uchinchi dars.`);
   }, [say]);
 
@@ -382,6 +385,14 @@ export default function VoiceInterface({ onSwitch }) {
     processCmdRef.current = processCmd;
   }, [processCmd]);
 
+  const stopRecognition = useCallback(() => {
+    shouldAutoRestartRef.current = false;
+    if (recRef.current) {
+      try { recRef.current.stop(); } catch (_) { }
+    }
+    setListening(false);
+  }, []);
+
   // Recognition setup
   useEffect(() => {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -408,7 +419,8 @@ export default function VoiceInterface({ onSwitch }) {
       console.error('SR Error:', e.error);
     };
     rec.onend = () => {
-      if (mountedRef.current && totalRestartCount < 50) {
+      setListening(false);
+      if (mountedRef.current && shouldAutoRestartRef.current && activeTabRef.current !== 'video' && totalRestartCount < 50) {
         totalRestartCount++;
         setTimeout(() => { try { rec.start(); } catch (_) { } }, 400);
       }
@@ -449,13 +461,20 @@ export default function VoiceInterface({ onSwitch }) {
   }, []);
 
   useEffect(() => {
-    if (!mountedRef.current || !recRef.current || listening) return;
+    if (!mountedRef.current || !recRef.current || listening || activeTab === 'video') return;
+    shouldAutoRestartRef.current = true;
     try {
       recRef.current.start();
     } catch (e) {
       console.warn('Voice recognition restart failed:', e);
     }
   }, [view, activeTab, listening]);
+
+  useEffect(() => {
+    if (activeTab === 'video' && recRef.current && listening) {
+      stopRecognition();
+    }
+  }, [activeTab, listening, stopRecognition]);
 
   useEffect(() => {
     if (view === 'hub') {
