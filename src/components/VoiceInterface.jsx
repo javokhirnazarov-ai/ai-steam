@@ -88,6 +88,13 @@ async function doSpeak(text, options = {}) {
   u.pitch = options.pitch ?? 0.96;
   u.volume = 1.0;
 
+  if (typeof options.onStart === 'function') u.onstart = options.onStart;
+  if (typeof options.onEnd === 'function') {
+    u.onend = options.onEnd;
+    u.onerror = options.onEnd;
+  }
+
+  if (typeof options.onStart === 'function') options.onStart();
   window.speechSynthesis.speak(u);
 }
 
@@ -203,6 +210,7 @@ export default function VoiceInterface({ onSwitch }) {
   const recRef = useRef(null);
   const mountedRef = useRef(true);
   const welcomeAudioRef = useRef(null);
+  const speakingRef = useRef(false);
 
   useEffect(() => {
     viewRef.current = view;
@@ -215,7 +223,13 @@ export default function VoiceInterface({ onSwitch }) {
   }, []);
 
   const say = useCallback(async (text) => {
-    await doSpeak(text, { rate: 0.95, pitch: 1.0, volume: 1 });
+    await doSpeak(text, {
+      rate: 0.95,
+      pitch: 1.0,
+      volume: 1,
+      onStart: () => { speakingRef.current = true; },
+      onEnd: () => { speakingRef.current = false; }
+    });
   }, []);
 
   const goHub = useCallback(() => {
@@ -233,8 +247,7 @@ export default function VoiceInterface({ onSwitch }) {
     setSelectedLesson(null);
     setView('module');
     setTranscript('');
-    const lessonsText = mod.lessons.map(l => l.title).join(', ');
-    say(`${mod.id}-modul: ${mod.title}. Darslar ro'yxati: ${lessonsText}. Qaysi birini boshlaymiz?`);
+    say(`${mod.id}-modul: ${mod.title}. Endi bir darsni tanlang. Masalan, birinchi dars, ikkinchi dars yoki uchinchi dars.`);
   }, [say]);
 
   const goLesson = useCallback((less) => {
@@ -274,9 +287,14 @@ export default function VoiceInterface({ onSwitch }) {
     console.log('[Voice] CMD:', cmd);
     setLastHeard(cmd);
 
+    const isBackCmd = norm.includes('orqaga') || norm.includes('menyu') || norm.includes('qayt');
+    if (speakingRef.current && !isBackCmd) {
+      return;
+    }
+
     // Ignore lesson commands while a video is actively playing, but still allow back navigation
     if (viewRef.current === 'lesson' && activeTabRef.current === 'video') {
-      if (norm.includes('orqaga') || norm.includes('menyu') || norm.includes('qayt')) {
+      if (isBackCmd) {
         cooldownRef.current = now;
         lastProcessedRef.current = { norm, time: now };
         goModule(selectedModule);
@@ -284,27 +302,7 @@ export default function VoiceInterface({ onSwitch }) {
       return;
     }
 
-    // Global Commands
-    if (norm.includes('orqaga') || norm.includes('menyu') || norm.includes('qayt')) {
-      cooldownRef.current = now;
-      lastProcessedRef.current = { norm, time: now };
-      if (viewRef.current === 'lesson') goModule(selectedModule);
-      else if (viewRef.current === 'module') goHub();
-      else onSwitch?.('onboarding');
-      return;
-    }
-
-    // Ignore lesson commands while a video is actively playing, but still allow back navigation
-    if (viewRef.current === 'lesson' && activeTabRef.current === 'video') {
-      if (norm.includes('orqaga') || norm.includes('menyu') || norm.includes('qayt')) {
-        cooldownRef.current = now;
-        goModule(selectedModule);
-      }
-      return;
-    }
-
-    // Global Commands
-    if (norm.includes('orqaga') || norm.includes('menyu') || norm.includes('qayt')) {
+    if (isBackCmd) {
       cooldownRef.current = now;
       lastProcessedRef.current = { norm, time: now };
       if (viewRef.current === 'lesson') goModule(selectedModule);
