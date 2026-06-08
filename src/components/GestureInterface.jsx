@@ -376,7 +376,7 @@ const GestureInterface = ({ onSwitch }) => {
                         </button>
                       ))}
                     </div>
-                  )
+                  )}
                 </div>
               ))}
             </div>
