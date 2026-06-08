@@ -326,7 +326,7 @@ const GestureInterface = ({ onSwitch }) => {
                     <h3 style={{ margin: 0 }}>{theme.id}. {theme.name}</h3>
                     <span style={{ fontSize: '0.8rem', color: 'var(--success)' }}>Tayyor ✅</span>
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px' }}>
                     <button
                       className="btn-secondary"
                       style={{ fontSize: '0.85rem', padding: '10px' }}
@@ -340,7 +340,6 @@ const GestureInterface = ({ onSwitch }) => {
                     >
                       📺 Videodars
                     </button>
-                    <button className="btn-secondary" style={{ fontSize: '0.85rem', padding: '10px' }}>📝 Testlar</button>
                     <button className="btn-secondary" style={{ fontSize: '0.85rem', padding: '10px' }}>📁 Topshiriqlar</button>
                   </div>
                 </div>
