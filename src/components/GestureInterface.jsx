@@ -14,6 +14,7 @@ const GestureInterface = ({ onSwitch }) => {
   const [debugData, setDebugData] = useState({ word: 'Yo\'q', xDiff: 0, yDiff: 0 });
   const [isTranslating, setIsTranslating] = useState(false);
   const [activeVideo, setActiveVideo] = useState(null);
+  const [selectedTaskThemeId, setSelectedTaskThemeId] = useState(null);
 
   const lastGestureRef = useRef("");
   const gestureCountRef = useRef(0);
@@ -42,7 +43,15 @@ const GestureInterface = ({ onSwitch }) => {
       title: "1-Modul: Til va nutq markazi!!!",
       icon: "🗣️",
       themes: [
-        { id: "1.1", name: "O harfi", video: "/videodarslar/1.1.i.mp4" },
+        {
+          id: "1.1",
+          name: "O harfi",
+          video: "/videodarslar/1.1.i.mp4",
+          tasks: [
+            { id: "task1", label: "1.1.Topshiriq.mp4", src: "/videodarslar/1.1.Topshiriq.mp4" },
+            { id: "task2", label: "1.1.Topshiriq2.mp4", src: "/videodarslar/1.1.Topshiriq2.mp4" }
+          ]
+        },
         { id: "1.2", name: "Lug‘at boyligini oshirish", video: "/videodarslar/1.2.mp4" },
         { id: "1.3", name: "Nutqning grammatik qurilishi" },
         { id: "1.4", name: "Bog‘lanishli nutqni rivojlantirish" },
@@ -340,8 +349,34 @@ const GestureInterface = ({ onSwitch }) => {
                     >
                       📺 Videodars
                     </button>
-                    <button className="btn-secondary" style={{ fontSize: '0.85rem', padding: '10px' }}>📁 Topshiriqlar</button>
+                    <button
+                      className="btn-secondary"
+                      style={{ fontSize: '0.85rem', padding: '10px' }}
+                      onClick={() => {
+                        if (theme.tasks && theme.tasks.length > 0) {
+                          setSelectedTaskThemeId(selectedTaskThemeId === theme.id ? null : theme.id);
+                        } else {
+                          alert("Ushbu mavzu uchun topshiriq videolari hozircha mavjud emas.");
+                        }
+                      }}
+                    >
+                      📁 Topshiriqlar
+                    </button>
                   </div>
+                  {selectedTaskThemeId === theme.id && theme.tasks && theme.tasks.length > 0 && (
+                    <div style={{ marginTop: '15px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px' }}>
+                      {theme.tasks.map(task => (
+                        <button
+                          key={task.id}
+                          className="btn-secondary"
+                          style={{ fontSize: '0.85rem', padding: '12px', textAlign: 'center' }}
+                          onClick={() => setActiveVideo(task.src)}
+                        >
+                          {task.label}
+                        </button>
+                      ))}
+                    </div>
+                  )
                 </div>
               ))}
             </div>
