@@ -231,7 +231,7 @@ const GestureInterface = ({ onSwitch }) => {
               const selectedTheme = modulesData[moduleIndex]?.themes[gestureNumber - 1];
               if (selectedTheme) {
                 if (selectedTheme.video) {
-                  setActiveVideo(selectedTheme.video);
+                  handleVideoOpen(selectedTheme.video);
                 } else {
                   alert("Ushbu dars uchun video darslik hozircha yuklanmagan.");
                 }
@@ -283,6 +283,15 @@ const GestureInterface = ({ onSwitch }) => {
     setRawWords([]);
     setLogicalSentence("");
     setRecentWord("");
+  };
+
+  const handleVideoOpen = (videoSrc) => {
+    setActiveVideo(videoSrc);
+    // Scroll to top and focus on video
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setTimeout(() => {
+      document.body.style.overflow = 'hidden';
+    }, 100);
   };
 
   const renderView = () => {
@@ -341,7 +350,7 @@ const GestureInterface = ({ onSwitch }) => {
                       style={{ fontSize: '0.85rem', padding: '10px' }}
                       onClick={() => {
                         if (theme.video) {
-                          setActiveVideo(theme.video);
+                          handleVideoOpen(theme.video);
                         } else {
                           alert("Ushbu dars uchun video darslik hozircha yuklanmagan.");
                         }
@@ -370,7 +379,7 @@ const GestureInterface = ({ onSwitch }) => {
                           key={task.id}
                           className="btn-secondary"
                           style={{ fontSize: '0.85rem', padding: '12px', textAlign: 'center' }}
-                          onClick={() => setActiveVideo(task.src)}
+                          onClick={() => handleVideoOpen(task.src)}
                         >
                           {task.label}
                         </button>
@@ -500,16 +509,19 @@ const GestureInterface = ({ onSwitch }) => {
 
       {/* Video Modal */}
       {activeVideo && (
-        <div className="video-overlay" style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.95)', zIndex: 10000, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+        <div className="video-overlay" style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100vh', background: 'rgba(0,0,0,0.99)', zIndex: 10000, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px', overflowY: 'auto' }}>
           <button
-            onClick={() => setActiveVideo(null)}
+            onClick={() => {
+              setActiveVideo(null);
+              document.body.style.overflow = 'auto';
+            }}
             style={{ position: 'absolute', top: '20px', left: '20px', padding: '10px 20px', background: 'rgba(255,255,255,0.1)', color: '#fff', borderRadius: '12px', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.2)', fontWeight: 'bold', zIndex: 10001, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.95rem' }}
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
             Chiqish
           </button>
 
-          <div style={{ width: '100%', maxWidth: '95vw', height: '100%', maxHeight: 'calc(100vh - 40px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: '100%', maxWidth: '95vw', height: 'auto', maxHeight: '90vh', display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '60px' }}>
             <video
               src={activeVideo}
               controls
