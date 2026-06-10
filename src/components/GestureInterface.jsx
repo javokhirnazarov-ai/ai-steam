@@ -14,7 +14,6 @@ const GestureInterface = ({ onSwitch }) => {
   const [debugData, setDebugData] = useState({ word: 'Yo\'q', xDiff: 0, yDiff: 0 });
   const [isTranslating, setIsTranslating] = useState(false);
   const [activeVideo, setActiveVideo] = useState(null);
-  const [selectedTaskThemeId, setSelectedTaskThemeId] = useState(null);
 
   const lastGestureRef = useRef("");
   const gestureCountRef = useRef(0);
@@ -363,7 +362,7 @@ const GestureInterface = ({ onSwitch }) => {
                       style={{ fontSize: '0.85rem', padding: '10px' }}
                       onClick={() => {
                         if (theme.tasks && theme.tasks.length > 0) {
-                          setSelectedTaskThemeId(selectedTaskThemeId === theme.id ? null : theme.id);
+                          handleVideoOpen(theme.tasks[0].src);
                         } else {
                           alert("Ushbu mavzu uchun topshiriq videolari hozircha mavjud emas.");
                         }
@@ -372,20 +371,6 @@ const GestureInterface = ({ onSwitch }) => {
                       📁 Topshiriqlar
                     </button>
                   </div>
-                  {selectedTaskThemeId === theme.id && theme.tasks && theme.tasks.length > 0 && (
-                    <div style={{ marginTop: '15px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px' }}>
-                      {theme.tasks.map(task => (
-                        <button
-                          key={task.id}
-                          className="btn-secondary"
-                          style={{ fontSize: '0.85rem', padding: '12px', textAlign: 'center' }}
-                          onClick={() => handleVideoOpen(task.src)}
-                        >
-                          {task.label}
-                        </button>
-                      ))}
-                    </div>
-                  )}
                 </div>
               ))}
             </div>
