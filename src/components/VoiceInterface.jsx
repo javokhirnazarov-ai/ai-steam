@@ -599,12 +599,12 @@ export default function VoiceInterface({ onSwitch }) {
         )}
 
         {activeTab === 'video' && selectedLesson.video && (
-          <div className="animate-fade-in" style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="animate-fade-in" style={{ width: '100%', height: 'auto', minHeight: '500px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'auto' }}>
             <video
               src={selectedLesson.video}
               controls
               autoPlay
-              style={{ width: '100%', borderRadius: '15px', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}
+              style={{ width: '100%', height: 'auto', maxHeight: '70vh', borderRadius: '15px', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}
             ></video>
           </div>
         )}

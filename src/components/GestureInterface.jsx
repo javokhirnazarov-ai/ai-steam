@@ -500,16 +500,16 @@ const GestureInterface = ({ onSwitch }) => {
 
       {/* Video Modal */}
       {activeVideo && (
-        <div className="video-overlay" style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.95)', zIndex: 10000, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+        <div className="video-overlay" style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.95)', zIndex: 10000, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
           <button
             onClick={() => setActiveVideo(null)}
-            style={{ position: 'absolute', top: '30px', left: '30px', padding: '12px 24px', background: 'rgba(255,255,255,0.1)', color: '#fff', borderRadius: '12px', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.2)', fontWeight: 'bold', zIndex: 10001, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+            style={{ position: 'absolute', top: '20px', left: '20px', padding: '10px 20px', background: 'rgba(255,255,255,0.1)', color: '#fff', borderRadius: '12px', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.2)', fontWeight: 'bold', zIndex: 10001, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.95rem' }}
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
             Chiqish
           </button>
 
-          <div style={{ width: '95vw', height: '90vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: '100%', maxWidth: '95vw', height: '100%', maxHeight: 'calc(100vh - 40px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <video
               src={activeVideo}
               controls
@@ -517,6 +517,8 @@ const GestureInterface = ({ onSwitch }) => {
               style={{
                 maxWidth: '100%',
                 maxHeight: '100%',
+                width: 'auto',
+                height: 'auto',
                 borderRadius: '15px',
                 boxShadow: '0 20px 80px rgba(0,0,0,0.8)',
                 objectFit: 'contain'
