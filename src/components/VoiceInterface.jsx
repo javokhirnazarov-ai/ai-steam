@@ -245,6 +245,7 @@ export default function VoiceInterface({ onSwitch }) {
     if (moduleAudioRef.current) {
       try { moduleAudioRef.current.pause(); } catch (e) { }
       moduleAudioRef.current = null;
+      try { shouldAutoRestartRef.current = true; if (recRef.current) recRef.current.start(); } catch (e) { }
     }
     setView('hub');
     setSelectedModule(null);
@@ -299,6 +300,8 @@ export default function VoiceInterface({ onSwitch }) {
     if (moduleAudioRef.current) {
       try { moduleAudioRef.current.pause(); } catch (e) { }
       moduleAudioRef.current = null;
+      // restart recognition because module intro was interrupted
+      try { shouldAutoRestartRef.current = true; if (recRef.current) recRef.current.start(); } catch (e) { }
     }
     setSelectedLesson(less);
     setView('lesson');
@@ -360,6 +363,7 @@ export default function VoiceInterface({ onSwitch }) {
         if (moduleAudioRef.current) {
           try { moduleAudioRef.current.pause(); } catch (e) { }
           moduleAudioRef.current = null;
+          try { shouldAutoRestartRef.current = true; if (recRef.current) recRef.current.start(); } catch (e) { }
         }
         setSelectedLesson(null);
         setView('module');
