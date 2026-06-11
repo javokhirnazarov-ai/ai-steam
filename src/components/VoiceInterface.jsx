@@ -392,12 +392,8 @@ export default function VoiceInterface({ onSwitch }) {
       if (modId && MODULES[modId - 1]) {
         cooldownRef.current = now;
         lastProcessedRef.current = { norm, time: now };
+        // Open module only. Do NOT auto-open the first lesson from the hub.
         goModule(MODULES[modId - 1]);
-        // Only open lesson immediately if phrase contains both 'dars' and an explicit action verb
-        const wantsLesson = /dars|darsni/.test(norm) && /boshla|boshlash|kir|kiring|kirish|och|ochish/.test(norm);
-        if (wantsLesson) {
-          try { goLesson(MODULES[modId - 1].lessons[0]); } catch (e) { }
-        }
         return;
       }
     }
