@@ -375,24 +375,27 @@ export default function VoiceInterface({ onSwitch }) {
       return;
     }
 
-    // Hub View Commands (require explicit trigger words to avoid accidental jumps)
+    // Hub View Commands: open module when user requests it; only open a lesson immediately
+    // when the phrase explicitly asks to start a lesson (contains 'dars' + an action verb).
     if (viewRef.current === 'hub') {
       let modId = null;
-      // accept 1|2|3, bir/birinci, ikki/ikkinchi, uch/uchinchi
       const numMatch = norm.match(/\b(1|2|3|bir|birinchi|ikki|ikkinchi|uch|uchinchi)\b/);
       const numMap = { '1': 1, '2': 2, '3': 3, 'bir': 1, 'birinchi': 1, 'ikki': 2, 'ikkinchi': 2, 'uch': 3, 'uchinchi': 3 };
-      const triggers = ['modul', 'modulni', 'modulga', 'dars', 'darsni', 'boshla', 'kir', 'kiring', 'kirish'];
       if (numMatch) {
         const candidate = numMap[numMatch[1]];
-        if (candidate && triggers.some(t => norm.includes(t))) modId = candidate;
+        // require an explicit module-related word to open a module
+        if (candidate && (norm.includes('modul') || norm.includes('modulga') || norm.includes('modulni') || norm.includes('kir') || norm.includes('kiring') || norm.includes('kirish') || norm.includes('boshla'))) {
+          modId = candidate;
+        }
       }
 
       if (modId && MODULES[modId - 1]) {
         cooldownRef.current = now;
         lastProcessedRef.current = { norm, time: now };
         goModule(MODULES[modId - 1]);
-        // If user explicitly asked to start a lesson (e.g., "1 dars boshla"), open lesson 1
-        if (norm.includes('dars') || norm.includes('boshla') || norm.includes('kir') || norm.includes('kiring')) {
+        // Only open lesson immediately if phrase contains both 'dars' and an explicit action verb
+        const wantsLesson = /dars|darsni/.test(norm) && /boshla|boshlash|kir|kiring|kirish|och|ochish/.test(norm);
+        if (wantsLesson) {
           try { goLesson(MODULES[modId - 1].lessons[0]); } catch (e) { }
         }
         return;
