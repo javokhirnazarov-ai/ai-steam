@@ -251,7 +251,12 @@ export default function VoiceInterface({ onSwitch }) {
     setTranscript('');
     setActiveTab('audio');
     if (mod.id === 1) {
-      say(`1-modul: Nutq. Bu modulda hozir faqat birinchi dars mavjud. Birinchi darsni boshlash uchun "dars" deb ayting.`);
+      // Play audio file instead of TTS for Module 1
+      const audio = new Audio('/voice/ovoz.1mod.wav');
+      audio.play().catch(err => {
+        console.warn("Module 1 audio play failed, falling back to TTS:", err);
+        say(`1-modul: Nutq. Bu modulda hozir faqat birinchi dars mavjud. Birinchi darsni boshlash uchun "dars" deb ayting.`);
+      });
     } else {
       say(`${mod.id}-modul: ${mod.title}. Endi bir darsni tanlang. Masalan, birinchi dars, ikkinchi dars yoki uchinchi dars.`);
     }
