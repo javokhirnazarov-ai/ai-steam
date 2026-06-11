@@ -378,9 +378,10 @@ export default function VoiceInterface({ onSwitch }) {
     // Hub View Commands (require explicit trigger words to avoid accidental jumps)
     if (viewRef.current === 'hub') {
       let modId = null;
-      const numMatch = norm.match(/\b(1|2|3|bir|ikki|uch)\b/);
-      const numMap = { '1': 1, '2': 2, '3': 3, 'bir': 1, 'ikki': 2, 'uch': 3 };
-      const triggers = ['modul', 'modulni', 'modulga', 'dars', 'darsni', 'boshla'];
+      // accept 1|2|3, bir/birinci, ikki/ikkinchi, uch/uchinchi
+      const numMatch = norm.match(/\b(1|2|3|bir|birinchi|ikki|ikkinchi|uch|uchinchi)\b/);
+      const numMap = { '1': 1, '2': 2, '3': 3, 'bir': 1, 'birinchi': 1, 'ikki': 2, 'ikkinchi': 2, 'uch': 3, 'uchinchi': 3 };
+      const triggers = ['modul', 'modulni', 'modulga', 'dars', 'darsni', 'boshla', 'kir', 'kiring', 'kirish'];
       if (numMatch) {
         const candidate = numMap[numMatch[1]];
         if (candidate && triggers.some(t => norm.includes(t))) modId = candidate;
@@ -391,7 +392,7 @@ export default function VoiceInterface({ onSwitch }) {
         lastProcessedRef.current = { norm, time: now };
         goModule(MODULES[modId - 1]);
         // If user explicitly asked to start a lesson (e.g., "1 dars boshla"), open lesson 1
-        if (norm.includes('dars') || norm.includes('boshla')) {
+        if (norm.includes('dars') || norm.includes('boshla') || norm.includes('kir') || norm.includes('kiring')) {
           try { goLesson(MODULES[modId - 1].lessons[0]); } catch (e) { }
         }
         return;
@@ -400,14 +401,14 @@ export default function VoiceInterface({ onSwitch }) {
 
     // Module View Commands (require explicit trigger words like 'dars' or 'boshla')
     if (viewRef.current === 'module') {
-      const matchLess = norm.match(/(?:dars|mashq)\s*([1-9]|10|bir|ikki|uch|to'rt|besh|olti|yetti|sakkiz|to'qqiz|o'n)/);
-      const lessMap = { 'bir': 1, 'ikki': 2, 'uch': 3, 'to\'rt': 4, 'besh': 5, 'olti': 6, 'yetti': 7, 'sakkiz': 8, 'to\'qqiz': 9, 'o\'n': 10 };
+      const matchLess = norm.match(/(?:dars|mashq)\s*([1-9]|10|bir|birinchi|ikki|ikkinchi|uch|uchinchi|to'rt|besh|olti|yetti|sakkiz|to'qqiz|o'n)/);
+      const lessMap = { 'bir': 1, 'birinchi': 1, 'ikki': 2, 'ikkinchi': 2, 'uch': 3, 'uchinchi': 3, 'to\'rt': 4, 'besh': 5, 'olti': 6, 'yetti': 7, 'sakkiz': 8, 'to\'qqiz': 9, 'o\'n': 10 };
       let lessId = matchLess ? (lessMap[matchLess[1]] || parseInt(matchLess[1])) : null;
 
       if (!lessId) {
         // Only accept standalone number if accompanied by trigger words
-        const triggers = ['dars', 'darsni', 'boshla', 'boshlash', 'och', 'ochish', 'start'];
-        const numMatch = norm.match(/\b([1-9]|10|bir|ikki|uch|to'rt|besh|olti|yetti|sakkiz|to'qqiz|o'n)\b/);
+        const triggers = ['dars', 'darsni', 'boshla', 'boshlash', 'och', 'ochish', 'start', 'kir', 'kiring', 'kirish'];
+        const numMatch = norm.match(/\b([1-9]|10|bir|birinchi|ikki|ikkinchi|uch|uchinchi|to'rt|besh|olti|yetti|sakkiz|to'qqiz|o'n)\b/);
         if (numMatch && triggers.some(t => norm.includes(t))) {
           lessId = lessMap[numMatch[1]] || parseInt(numMatch[1]);
         }
