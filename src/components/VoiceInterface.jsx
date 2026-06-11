@@ -329,6 +329,8 @@ export default function VoiceInterface({ onSwitch }) {
     if (!cmd) return;
 
     const norm = cmd.toLowerCase();
+    // Ignore numeric-only transcripts (e.g., '030') that cause accidental navigation
+    if (/^\d{2,}$/.test(norm) || /\b\d{2,}\b/.test(norm)) return;
     if (lastProcessedRef.current.norm === norm && now - lastProcessedRef.current.time < 2500) {
       return;
     }
@@ -396,19 +398,22 @@ export default function VoiceInterface({ onSwitch }) {
       }
     }
 
-    // Module View Commands
+    // Module View Commands (require explicit trigger words like 'dars' or 'boshla')
     if (viewRef.current === 'module') {
       const matchLess = norm.match(/(?:dars|mashq)\s*([1-9]|10|bir|ikki|uch|to'rt|besh|olti|yetti|sakkiz|to'qqiz|o'n)/);
       const lessMap = { 'bir': 1, 'ikki': 2, 'uch': 3, 'to\'rt': 4, 'besh': 5, 'olti': 6, 'yetti': 7, 'sakkiz': 8, 'to\'qqiz': 9, 'o\'n': 10 };
       let lessId = matchLess ? (lessMap[matchLess[1]] || parseInt(matchLess[1])) : null;
 
       if (!lessId) {
-        // fallback search
-        Object.keys(lessMap).forEach(key => { if (norm.includes(key)) lessId = lessMap[key]; });
-        for (let i = 1; i <= 10; i++) { if (norm.includes(i.toString())) lessId = i; }
+        // Only accept standalone number if accompanied by trigger words
+        const triggers = ['dars', 'darsni', 'boshla', 'boshlash', 'och', 'ochish', 'start'];
+        const numMatch = norm.match(/\b([1-9]|10|bir|ikki|uch|to'rt|besh|olti|yetti|sakkiz|to'qqiz|o'n)\b/);
+        if (numMatch && triggers.some(t => norm.includes(t))) {
+          lessId = lessMap[numMatch[1]] || parseInt(numMatch[1]);
+        }
       }
 
-      if (lessId && selectedModule.lessons[lessId - 1]) {
+      if (lessId && selectedModule && selectedModule.lessons && selectedModule.lessons[lessId - 1]) {
         cooldownRef.current = now;
         lastProcessedRef.current = { norm, time: now };
         goLesson(selectedModule.lessons[lessId - 1]);
