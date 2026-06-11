@@ -214,6 +214,9 @@ export default function VoiceInterface({ onSwitch }) {
   const speakingRef = useRef(false);
   const shouldAutoRestartRef = useRef(true);
 
+  // Toggle TTS globally (set false to disable robot voices)
+  const TTS_ENABLED = false;
+
   useEffect(() => {
     viewRef.current = view;
   }, [view]);
@@ -228,6 +231,7 @@ export default function VoiceInterface({ onSwitch }) {
   }, []);
 
   const say = useCallback(async (text) => {
+    if (!TTS_ENABLED) return;
     await doSpeak(text, {
       rate: 0.95,
       pitch: 1.0,
@@ -365,24 +369,24 @@ export default function VoiceInterface({ onSwitch }) {
       return;
     }
 
-    // Hub View Commands
+    // Hub View Commands (require explicit trigger words to avoid accidental jumps)
     if (viewRef.current === 'hub') {
       let modId = null;
-      if (norm.includes('bir') || norm.includes('1')) modId = 1;
-      else if (norm.includes('ikki') || norm.includes('2')) modId = 2;
-      else if (norm.includes('uch') || norm.includes('3')) modId = 3;
+      const numMatch = norm.match(/\b(1|2|3|bir|ikki|uch)\b/);
+      const numMap = { '1': 1, '2': 2, '3': 3, 'bir': 1, 'ikki': 2, 'uch': 3 };
+      const triggers = ['modul', 'modulni', 'modulga', 'dars', 'darsni', 'boshla'];
+      if (numMatch) {
+        const candidate = numMap[numMatch[1]];
+        if (candidate && triggers.some(t => norm.includes(t))) modId = candidate;
+      }
 
       if (modId && MODULES[modId - 1]) {
         cooldownRef.current = now;
         lastProcessedRef.current = { norm, time: now };
-        // If user explicitly mentioned 'modul' or 'dars' together, handle accordingly
-        const wantsModule = norm.includes('modul') || norm.includes('modulni') || norm.includes('boshla');
         goModule(MODULES[modId - 1]);
-        // If user asked to open a lesson immediately (e.g., "1 dars"), open lesson 1
-        if (norm.includes('dars') || norm.includes('darsni') || norm.includes('boshla')) {
-          try {
-            goLesson(MODULES[modId - 1].lessons[0]);
-          } catch (e) { }
+        // If user explicitly asked to start a lesson (e.g., "1 dars boshla"), open lesson 1
+        if (norm.includes('dars') || norm.includes('boshla')) {
+          try { goLesson(MODULES[modId - 1].lessons[0]); } catch (e) { }
         }
         return;
       }
@@ -529,11 +533,8 @@ export default function VoiceInterface({ onSwitch }) {
     }
   }, [view, activeTab, listening]);
 
-  useEffect(() => {
-    if (activeTab === 'video' && recRef.current && listening) {
-      stopRecognition();
-    }
-  }, [activeTab, listening, stopRecognition]);
+  // Keep recognition running during video so user can still say 'orqaga'.
+  // Previously we stopped recognition while video played which prevented back navigation.
 
   useEffect(() => {
     if (view === 'hub') {
