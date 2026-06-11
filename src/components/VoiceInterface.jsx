@@ -210,6 +210,7 @@ export default function VoiceInterface({ onSwitch }) {
   const recRef = useRef(null);
   const mountedRef = useRef(true);
   const welcomeAudioRef = useRef(null);
+  const moduleAudioRef = useRef(null);
   const speakingRef = useRef(false);
   const shouldAutoRestartRef = useRef(true);
 
@@ -220,6 +221,9 @@ export default function VoiceInterface({ onSwitch }) {
   useEffect(() => {
     return () => {
       mountedRef.current = false;
+      if (moduleAudioRef.current) {
+        try { moduleAudioRef.current.pause(); } catch (e) { }
+      }
     };
   }, []);
 
@@ -234,6 +238,10 @@ export default function VoiceInterface({ onSwitch }) {
   }, []);
 
   const goHub = useCallback(() => {
+    if (moduleAudioRef.current) {
+      try { moduleAudioRef.current.pause(); } catch (e) { }
+      moduleAudioRef.current = null;
+    }
     setView('hub');
     setSelectedModule(null);
     setSelectedLesson(null);
@@ -252,12 +260,20 @@ export default function VoiceInterface({ onSwitch }) {
     setActiveTab('audio');
     if (mod.id === 1) {
       // Play audio file instead of TTS for Module 1
+      if (moduleAudioRef.current) {
+        try { moduleAudioRef.current.pause(); } catch (e) { }
+      }
       const audio = new Audio('/voice/ovoz.1mod.wav');
+      moduleAudioRef.current = audio;
       audio.play().catch(err => {
         console.warn("Module 1 audio play failed, falling back to TTS:", err);
         say(`1-modul: Nutq. Bu modulda hozir faqat birinchi dars mavjud. Birinchi darsni boshlash uchun "dars" deb ayting.`);
       });
     } else {
+      if (moduleAudioRef.current) {
+        try { moduleAudioRef.current.pause(); } catch (e) { }
+        moduleAudioRef.current = null;
+      }
       say(`${mod.id}-modul: ${mod.title}. Endi bir darsni tanlang. Masalan, birinchi dars, ikkinchi dars yoki uchinchi dars.`);
     }
   }, [say]);
@@ -265,6 +281,10 @@ export default function VoiceInterface({ onSwitch }) {
   const goLesson = useCallback((less) => {
     if (welcomeAudioRef.current) {
       try { welcomeAudioRef.current.pause(); } catch (e) { }
+    }
+    if (moduleAudioRef.current) {
+      try { moduleAudioRef.current.pause(); } catch (e) { }
+      moduleAudioRef.current = null;
     }
     setSelectedLesson(less);
     setView('lesson');
@@ -317,7 +337,14 @@ export default function VoiceInterface({ onSwitch }) {
     if (isBackCmd) {
       cooldownRef.current = now;
       lastProcessedRef.current = { norm, time: now };
-      if (viewRef.current === 'lesson') goModule(selectedModule);
+      if (viewRef.current === 'lesson') {
+        if (moduleAudioRef.current) {
+          try { moduleAudioRef.current.pause(); } catch (e) { }
+          moduleAudioRef.current = null;
+        }
+        setSelectedLesson(null);
+        setView('module');
+      }
       else if (viewRef.current === 'module') goHub();
       else onSwitch?.('onboarding');
       return;
