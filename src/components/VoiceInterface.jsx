@@ -263,11 +263,21 @@ export default function VoiceInterface({ onSwitch }) {
       if (moduleAudioRef.current) {
         try { moduleAudioRef.current.pause(); } catch (e) { }
       }
+      // stop recognition while module audio plays
+      try { stopRecognition(); } catch (e) { }
       const audio = new Audio('/voice/ovoz.1mod.wav');
       moduleAudioRef.current = audio;
+      audio.onended = () => {
+        // allow recognition to restart after module audio ends
+        shouldAutoRestartRef.current = true;
+        try { if (recRef.current) recRef.current.start(); } catch (e) { }
+        moduleAudioRef.current = null;
+      };
       audio.play().catch(err => {
         console.warn("Module 1 audio play failed, falling back to TTS:", err);
-        say(`1-modul: Nutq. Bu modulda hozir faqat birinchi dars mavjud. Birinchi darsni boshlash uchun "dars" deb ayting.`);
+        // if audio fails, fall back to short TTS prompt
+        try { shouldAutoRestartRef.current = true; } catch (e) {}
+        say(`1-modul: Nutq. Bu modulda hozir faqat birinchi dars mavjud. Birinchi darsni boshlash uchun \"dars\" deb ayting.`);
       });
     } else {
       if (moduleAudioRef.current) {
@@ -294,8 +304,8 @@ export default function VoiceInterface({ onSwitch }) {
       setActiveTab('video');
       // Do not use long TTS before a video lesson so video audio can play cleanly.
     } else {
+      // switch to audio tab but do NOT auto-play TTS. User can press to listen.
       setActiveTab('audio');
-      say(`${less.id}-dars ochildi. ${lessonName}. Hozir ovozli dars qismidamiz. Topshiriqlarni ko'rish uchun "topshiriq" deb ayting.`);
     }
   }, [say]);
 
@@ -321,6 +331,11 @@ export default function VoiceInterface({ onSwitch }) {
 
     const isBackCmd = norm.includes('orqaga') || norm.includes('menyu') || norm.includes('qayt');
     if (speakingRef.current && !isBackCmd) {
+      return;
+    }
+
+    // While module intro audio is playing, ignore non-back commands to avoid accidental navigation
+    if (moduleAudioRef.current && !isBackCmd) {
       return;
     }
 
@@ -360,7 +375,15 @@ export default function VoiceInterface({ onSwitch }) {
       if (modId && MODULES[modId - 1]) {
         cooldownRef.current = now;
         lastProcessedRef.current = { norm, time: now };
+        // If user explicitly mentioned 'modul' or 'dars' together, handle accordingly
+        const wantsModule = norm.includes('modul') || norm.includes('modulni') || norm.includes('boshla');
         goModule(MODULES[modId - 1]);
+        // If user asked to open a lesson immediately (e.g., "1 dars"), open lesson 1
+        if (norm.includes('dars') || norm.includes('darsni') || norm.includes('boshla')) {
+          try {
+            goLesson(MODULES[modId - 1].lessons[0]);
+          } catch (e) { }
+        }
         return;
       }
     }
@@ -615,7 +638,6 @@ export default function VoiceInterface({ onSwitch }) {
               {[...Array(12)].map((_, i) => <div key={i} className="bar" style={{ animationDelay: `${i * 0.1}s`, width: '6px', margin: '0 3px' }}></div>)}
             </div>
             <p style={{ fontSize: '1.4rem', lineHeight: '1.8', maxWidth: '700px' }}>{selectedLesson.content}</p>
-            <button onClick={() => say(selectedLesson.content)} style={{ marginTop: '30px', color: 'var(--text-accent)', textDecoration: 'underline' }}>Qayta eshitish</button>
           </div>
         )}
 
