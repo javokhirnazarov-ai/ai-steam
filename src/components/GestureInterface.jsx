@@ -46,10 +46,7 @@ const GestureInterface = ({ onSwitch }) => {
           id: "1.1",
           name: "O harfi",
           video: "/videodarslar/1.1.i.mp4",
-          tasks: [
-            { id: "task1", label: "1.1.Topshiriq.mp4", src: "/videodarslar/1.1.Topshiriq.mp4" },
-            { id: "task2", label: "1.1.Topshiriq2.mp4", src: "/videodarslar/1.1.Topshiriq2.mp4" }
-          ]
+          tasksUrl: "https://magic-nature-v6.vercel.app/"
         },
         { id: "1.2", name: "Lug‘at boyligini oshirish", video: "/videodarslar/1.2.mp4" },
         { id: "1.3", name: "Nutqning grammatik qurilishi" },
@@ -361,7 +358,9 @@ const GestureInterface = ({ onSwitch }) => {
                       className="btn-secondary"
                       style={{ fontSize: '0.85rem', padding: '10px' }}
                       onClick={() => {
-                        if (theme.tasks && theme.tasks.length > 0) {
+                        if (theme.tasksUrl) {
+                          window.location.assign(theme.tasksUrl);
+                        } else if (theme.tasks && theme.tasks.length > 0) {
                           handleVideoOpen(theme.tasks[0].src);
                         } else {
                           alert("Ushbu mavzu uchun topshiriq videolari hozircha mavjud emas.");
