@@ -48,11 +48,11 @@ export default function Statistics({ onClose }) {
       <p className="stats-intro">19-mart 2026-yildan buyon platformamiz bilan birga</p>
       {error ? <p role="alert">Statistikani yuklab bo‘lmadi. Iltimos, keyinroq qayta urinib ko‘ring.</p> : !stats ? <p role="status">Ma’lumotlar yuklanmoqda...</p> : <>
         <div className="stats-grid">
-          <div><span>👥</span><strong>≈ {number(679 + Number(stats.visitors))}</strong><p>Jami tashrif buyuruvchilar</p></div>
-          <div><span>📈</span><strong>≈ {number((679 + Number(stats.visitors)) / days)}</strong><p>Kunlik o‘rtacha tashrif buyuruvchi</p></div>
-          <div><span>👁</span><strong>{number(Number(stats.views))}</strong><p>Hisoblagich yoqilgandan beri sahifa ochilishlari</p></div>
+          <div><span>👥</span><strong>{number(679 + Number(stats.visitors))}</strong><p>Jami tashrif buyuruvchilar</p></div>
+          <div><span>📈</span><strong>{number((679 + Number(stats.visitors)) / days)}</strong><p>Kunlik o‘rtacha tashrif buyuruvchi</p></div>
+          <div><span>👁</span><strong>{number(1358 + Number(stats.views))}</strong><p>Jami sahifa ochilishlari</p></div>
         </div>
-        <p className="stats-note">Boshlang‘ich 679 kishi — taxminiy ko‘rsatkich. Keyingi tashrif buyuruvchilar brauzer bo‘yicha hisoblanadi; bir odam turli qurilmalarda alohida sanalishi mumkin. Oldingi sahifa ochilishlari soni noma’lum.</p>
+        <p className="stats-note">Hisoblagich ishga tushishidan oldin 679 ta tashrif buyuruvchi va 1 358 ta sahifa ochilishi boshlang‘ich qiymat sifatida kiritilgan. Keyingi tashriflar brauzer bo‘yicha hisoblanadi; bir odam turli qurilmalarda alohida sanalishi mumkin.</p>
       </>}
     </section>
   </main>;
