@@ -1,0 +1,14 @@
+.stats-open { position: fixed; top: 20px; right: 20px; z-index: 20; padding: 12px 18px; border: 1px solid #ffffff80; border-radius: 14px; background: #ffffff20; color: white; font-size: 1rem; font-weight: 700; cursor: pointer; backdrop-filter: blur(12px); }
+.stats-open:focus-visible, .stats-back:focus-visible { outline: 3px solid #ffd877; outline-offset: 3px; }
+.statistics-page { min-height: 100vh; display: grid; place-items: center; padding: 28px; color: #fff; background: linear-gradient(135deg, #061730, #1c3d5e); }
+.statistics-card { width: min(100%, 920px); padding: clamp(24px, 5vw, 56px); border: 1px solid #ffffff40; border-radius: 32px; background: #ffffff18; box-shadow: 0 15px 40px #0003; }
+.stats-back { border: 1px solid #ffffff80; border-radius: 12px; padding: 10px 16px; background: transparent; color: white; cursor: pointer; font-size: 1rem; }
+.stats-eyebrow { margin: 36px 0 8px; color: #8edfdc; font-weight: 700; letter-spacing: .1em; font-size: .8rem; }
+.statistics-card h1 { font-size: clamp(2rem, 5vw, 3.4rem); margin: 0 0 12px; }
+.stats-intro { color: #d4e2ed; margin: 0 0 30px; }
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; }
+.stats-grid > div { background: #ffffff15; padding: 24px; border: 1px solid #ffffff30; border-radius: 20px; }
+.stats-grid span { display: block; font-size: 1.5rem; margin-bottom: 15px; }
+.stats-grid strong { font-size: 2rem; }
+.stats-grid p { color: #d4e2ed; line-height: 1.45; margin: 8px 0 0; }
+.stats-note { color: #c7d8e5; line-height: 1.6; font-size: .9rem; margin: 24px 0 0; }

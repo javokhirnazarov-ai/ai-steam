@@ -1,11 +1,15 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import SmartOnboarding from './components/SmartOnboarding';
 import Dashboard from './components/Dashboard';
 import VoiceInterface from './components/VoiceInterface';
 import GestureInterface from './components/GestureInterface';
+import Statistics, { recordVisit } from './components/Statistics';
+import './statistics.css';
 
 function App() {
   const [currentInterface, setCurrentInterface] = useState('onboarding');
+  const [showStatistics, setShowStatistics] = useState(false);
+  useEffect(() => { recordVisit(); }, []);
 
   const renderInterface = () => {
     switch (currentInterface) {
@@ -26,7 +30,8 @@ function App() {
 
   return (
     <div className="app-container">
-      {renderInterface()}
+      {showStatistics ? <Statistics onClose={() => setShowStatistics(false)} /> : renderInterface()}
+      {!showStatistics && currentInterface === 'onboarding' && <button className="stats-open" onClick={() => setShowStatistics(true)}>📊 Statistika</button>}
     </div>
   );
 }
